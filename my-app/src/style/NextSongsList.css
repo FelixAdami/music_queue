@@ -1,0 +1,45 @@
+/* Upcoming songs list */
+#nextSongsList {
+  overflow: scroll;
+  width: 650px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+/* Song title */
+#nextSongsList h4 {
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  line-height: 1.3;
+}
+
+/* Artist name */
+#nextSongsList h5 {
+  color: #999;
+  font-size: 0.9rem;
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.4;
+}
+#nextSongsList .bin {
+  color: #999;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  #nextSongsList h4 {
+    font-size: 1rem;
+  }
+
+  #nextSongsList h5 {
+    font-size: 0.85rem;
+  }
+}
+.drag-drop {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}

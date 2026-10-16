@@ -3,7 +3,6 @@ import CurrentSong from "./components/CurrentSong";
 import NextSongsList from "./components/NextSongsList";
 
 function App() {
-
   return (
     <>
       <section id="center">
@@ -17,6 +16,8 @@ function App() {
         <CurrentSong />
         {/* here we have the list of upcoming songs */}
         <NextSongsList />
+
+        <button className="btn">**Create Room**</button>
       </section>
     </>
   );

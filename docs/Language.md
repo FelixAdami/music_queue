@@ -12,6 +12,10 @@
 - _QueueEntry_: the entierty of SongItem plus QueuePosition
 - _MusicQueue_: the collection of all queue entries, basically the playlist
 - _PlaybackStatus_: whether the song is playing, paused, up next etc.
+- _SessionRules_: rules defined by the host
+- _StaticRules_: rules we define, which are always true; what we define (for ex. no duplicates)
+- _QueuePosition_: priority level in the queue
+- _ModerationDecision_: all rules which are guidelines of what goes into music queue
 
 **Bounded Contexts**
 

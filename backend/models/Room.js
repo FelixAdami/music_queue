@@ -6,6 +6,12 @@ const roomSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+
+    hostSpotifyId: {
+        type: String,
+        required: true
+    },
+
     createdAt: {
         type: Date,
         default: Date.now

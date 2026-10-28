@@ -1,0 +1,19 @@
+.responsive-qr {
+  width: 400px;
+  height: auto;
+  max-width: 100%;
+}
+
+/* Tablets */
+@media (max-width: 991.98px) {
+  .responsive-qr {
+    width: 300px;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 575.98px) {
+  .responsive-qr {
+    width: 220px;
+  }
+}

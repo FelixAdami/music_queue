@@ -57,6 +57,8 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   return payload as T;
 }
 
+// frontend wrapper for the api endpoints - to import them easier into react components
+
 export function getCurrentSpotifyUser() {
   return requestJson<SpotifyUser>("/api/spotify/me");
 }
@@ -81,3 +83,5 @@ export function getRoomHostStatus(roomId: string) {
 export function startSpotifyLogin() {
   window.location.assign(`${API_BASE_URL}/api/spotify/login`);
 }
+
+// add later /api/rooms/:id/host <- for authentication

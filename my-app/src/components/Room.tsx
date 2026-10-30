@@ -1,7 +1,6 @@
 import CurrentSong from "./CurrentSong";
 import NextSongsList from "./NextSongsList";
 import HostQrCode from "./HostQrCode";
-import { useState } from "react";
 
 function Room({ roomId }: { roomId: string }) {
   {

@@ -5,7 +5,7 @@ type HostQrCodeProps = {
   roomId: string;
 };
 
-export default function HostQrCode({ roomId }: HostQrCodeProps) {
+function HostQrCode({ roomId }: HostQrCodeProps) {
   const joinUrl = new URL(
     `/join/${encodeURIComponent(roomId.trim())}`,
     window.location.origin,
@@ -31,3 +31,5 @@ export default function HostQrCode({ roomId }: HostQrCodeProps) {
     </>
   );
 }
+
+export default HostQrCode;

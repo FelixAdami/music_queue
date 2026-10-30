@@ -110,6 +110,31 @@ router.get("/:id", async (req, res) => {
     }
 });
 
+// Join a room as a guest. Repeated requests from the same session are safe.
+router.post("/:id/join", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ error: "Invalid room ID" });
+        }
+
+        const room = await Room.findById(id);
+        if (!room) {
+            return res.status(404).json({ error: "Room not found" });
+        }
+
+        req.session.joinedRoomId = room._id.toString();
+        return res.status(200).json({
+            roomId: room._id,
+            roomName: room.name
+        });
+    } catch (error) {
+        console.error("Error joining room:", error);
+        return res.status(500).json({ error: "Failed to join room" });
+    }
+});
+
 // Check whether the authenticated user is the room host
 router.get(
     "/:id/host",

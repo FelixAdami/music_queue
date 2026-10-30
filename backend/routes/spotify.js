@@ -6,6 +6,18 @@ const { getValidAccessToken } = require("../utils/spotifyAuth");
 
 const router = express.Router();
 
+function getFrontendUrl(path) {
+  const frontendOrigin = (
+    process.env.FRONTEND_URL ||
+    process.env.FRONTEND_ORIGINS ||
+    "http://localhost:5173"
+  )
+    .split(",")[0]
+    .trim();
+
+  return new URL(path, frontendOrigin).toString();
+}
+
 // 1. Redirect user to Spotify login
 router.get("/login", (req, res) => {
   const state = crypto.randomBytes(16).toString("hex");
@@ -55,7 +67,7 @@ router.get("/callback", async (req, res) => {
   }
 
   if (error) {
-    return res.status(400).send("Spotify authorization denied");
+    return res.redirect(getFrontendUrl("/host?spotify=denied"));
   }
 
   if (typeof code !== "string") {
@@ -147,7 +159,7 @@ router.get("/callback", async (req, res) => {
       refreshTokenReceived: Boolean(tokens.refresh_token),
     });
 
-    return res.send("Spotify authorization successful!");
+    return res.redirect(getFrontendUrl("/host?spotify=connected"));
   } catch (error) {
     console.error("Spotify authorization error:", error.message);
 

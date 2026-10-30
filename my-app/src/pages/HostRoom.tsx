@@ -1,15 +1,10 @@
-import CurrentSong from "./CurrentSong";
-import NextSongsList from "./NextSongsList";
-import HostQrCode from "./HostQrCode";
+import { useParams } from "react-router-dom";
+import CurrentSong from "../components/CurrentSong";
+import NextSongsList from "../components/NextSongsList";
+import HostQrCode from "../components/HostQrCode";
 
-function Room({ roomId }: { roomId: string }) {
-  {
-    /* 
-  const [roomId, setRoomId] = useState(
-    new URLSearchParams(window.location.search).get("room") ?? "",
-  );
-  */
-  }
+function HostRoom() {
+  const { roomId = "" } = useParams<{ roomId: string }>();
   return (
     <div className="row min-vh-100">
       <section className="col align-self-center">
@@ -40,4 +35,4 @@ function Room({ roomId }: { roomId: string }) {
   );
 }
 
-export default Room;
+export default HostRoom;

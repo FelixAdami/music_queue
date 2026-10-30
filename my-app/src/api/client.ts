@@ -74,6 +74,13 @@ export function getRoom(roomId: string) {
   return requestJson<Room>(`/api/rooms/${encodeURIComponent(roomId)}`);
 }
 
+export function joinRoom(roomId: string) {
+  return requestJson<{ roomId: string; roomName: string }>(
+    `/api/rooms/${encodeURIComponent(roomId)}/join`,
+    { method: "POST" },
+  );
+}
+
 export function getRoomHostStatus(roomId: string) {
   return requestJson<RoomHostStatus>(
     `/api/rooms/${encodeURIComponent(roomId)}/host`,

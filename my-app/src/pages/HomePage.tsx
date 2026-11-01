@@ -23,10 +23,7 @@ function HomePage() {
     <main className="home-page">
       <div className="home-content">
         <section className="home-hero" aria-labelledby="home-title">
-          <div className="home-mark" aria-hidden="true">
-            MQ
-          </div>
-          <p className="home-eyebrow">A shared music queue</p>
+          <p className="home-eyebrow">shared music queue</p>
           <h1 id="home-title">
             Make your next gathering a little more musical.
           </h1>
@@ -51,7 +48,9 @@ function HomePage() {
           <article className="home-option home-guest-option">
             <p className="home-option-label">For guests</p>
             <h2>Join the queue</h2>
-            <p>Scan the host QR code or enter the room code below.</p>
+            <p>Scan the host QR code</p>
+
+            {/*  or enter the room code below.</p>
             <form className="home-join-form" onSubmit={handleJoinRoom}>
               <label htmlFor="room-code">Room code</label>
               <div className="home-join-controls">
@@ -75,6 +74,7 @@ function HomePage() {
                 </p>
               )}
             </form>
+            */}
           </article>
         </section>
 

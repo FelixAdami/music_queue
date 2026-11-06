@@ -4,6 +4,7 @@ import { ApiError, getRoomHostStatus } from "../api/client";
 import CurrentSong from "../components/CurrentSong";
 import HostQrCode from "../components/HostQrCode";
 import NextSongsList from "../components/NextSongsList";
+import Player from "../components/Player";
 
 type HostCheck =
   | { roomId: string; status: "loading" }
@@ -98,9 +99,13 @@ function HostRoom() {
         <section className="col" id="center">
           <div>
             <h2>Currently Playing</h2>
-            <p>Queue controls will appear here.</p>
           </div>
           <CurrentSong />
+          {/* add this when it work later - player should then be the CurrentSong card
+          <div className="mt-3">
+            <Player />
+          </div>
+           */}
           <NextSongsList />
         </section>
       </div>

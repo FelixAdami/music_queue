@@ -34,7 +34,10 @@ function JoinRoom() {
       <h1>You've joined room {roomId}!</h1>
       <p>Search for songs and add them to the queue.</p>
 
-      {/* Your guest music queue UI goes here */}
+      {/* Your guest music queue UI goes here 
+      - SearchSong
+      - AddSong (maybe all in one)
+      */}
     </div>
   );
 }

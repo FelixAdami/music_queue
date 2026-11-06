@@ -47,6 +47,17 @@ async function getValidAccessToken(spotifyUserId) {
 
   const tokens = await response.json();
 
+// Validate Spotify's token response before saving
+if (
+  typeof tokens.access_token !== "string" ||
+  !tokens.access_token ||
+  !Number.isFinite(tokens.expires_in) ||
+  tokens.expires_in <= 0
+) {
+  throw new Error("Spotify returned an invalid token response");
+}
+
+
   // 4. Update access token and expiration time
   const update = {
     accessToken: encrypt(tokens.access_token),

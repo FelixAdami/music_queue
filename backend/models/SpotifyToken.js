@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const spotifyTokenSchema = new mongoose.Schema({
@@ -21,6 +22,9 @@ const spotifyTokenSchema = new mongoose.Schema({
         type: Date,
         required: true
     }
-});
+}, { timestamps: true });
 
-module.exports = mongoose.model("SpotifyToken", spotifyTokenSchema);
+module.exports = mongoose.model(
+    "SpotifyToken",
+    spotifyTokenSchema
+);

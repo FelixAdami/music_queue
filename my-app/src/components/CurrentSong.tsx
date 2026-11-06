@@ -1,6 +1,7 @@
 import coverImg from "../assets/Even_in_Arcadia.jpg";
 import "../style/CurrentSong.css";
 import Timestamp from "../helpers/Timestamp";
+import Player from "./Player";
 
 function CurrentSong() {
   {
@@ -32,13 +33,7 @@ function CurrentSong() {
             <h2>{songName}</h2>
             <h3>{artistName}</h3>
           </div>
-          <div className="pe-3">
-            <h2>
-              <pre>
-                <button className="btn">⏮</button> {} <button className="btn">▶</button> {} <button className="btn">⏭</button>
-              </pre>
-            </h2>
-          </div>
+          <Player />
         </div>
 
         <div className="d-flex align-items-center gap-2 mt-4">

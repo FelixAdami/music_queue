@@ -123,21 +123,21 @@ function Player() {
   };
 
   const statusLabel = {
-    loading: "Connecting to Spotify…",
+    loading: "Connecting to Spotify...",
     ready: "Spotify player ready",
     offline: "Spotify player offline",
     error: "Spotify player unavailable",
   }[status];
 
   return (
-    <div className="d-flex align-items-center justify-content-between gap-3 p-3 rounded-4 bg-dark text-white shadow">
-      <div>
-        <p className="mb-0">{statusLabel}</p>
-        {message && <small className="text-warning">{message}</small>}
-      </div>
+    <div className="d-flex flex-column align-items-end gap-1">
+      <small className="text-secondary text-nowrap">{statusLabel}</small>
+      {message && (
+        <small className="text-warning text-end">{message}</small>
+      )}
       <button
         type="button"
-        className="btn btn-outline-light"
+        className="btn btn-outline-light btn-sm"
         onClick={togglePlayback}
         disabled={status !== "ready"}
       >

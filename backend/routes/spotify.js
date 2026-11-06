@@ -1,223 +1,215 @@
-
 const express = require("express");
-const crypto = require("crypto");
+const crypto = require("node:crypto");
 const SpotifyToken = require("../models/SpotifyToken");
-const { encrypt } = require("../utils/tokenCrypto");
+const { encrypt } = require("../utils/encryption");
+const { getValidAccessToken } = require("../utils/spotifyAuth");
 
 const router = express.Router();
 
+function getFrontendUrl(path) {
+  const frontendOrigin = (
+    process.env.FRONTEND_URL ||
+    process.env.FRONTEND_ORIGINS ||
+    "http://localhost:5173"
+  )
+    .split(",")[0]
+    .trim();
+
+  return new URL(path, frontendOrigin).toString();
+}
+
+// 1. Redirect user to Spotify login
 router.get("/login", (req, res) => {
-    const clientId = process.env.SPOTIFY_CLIENT_ID;
-    const redirectUri = process.env.SPOTIFY_REDIRECT_URI;
+  const state = crypto.randomBytes(16).toString("hex");
 
-    if (!clientId || !redirectUri) {
-        return res.status(500).json({
-            error: "Spotify configuration missing"
-        });
-    }
+  // Save state in a cookie for CSRF protection
+  res.cookie("spotify_auth_state", state, {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 10 * 60 * 1000,
+  });
 
-    // Generate random state for OAuth security
-    const state = crypto.randomBytes(16).toString("hex");
+  const params = new URLSearchParams({
+    response_type: "code",
+    client_id: process.env.SPOTIFY_CLIENT_ID,
+    scope:
+      "streaming user-read-private user-read-email user-read-playback-state user-modify-playback-state",
+    redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
+    state: state,
+  });
 
-    // Store state in a short-lived cookie
-    res.cookie("spotify_auth_state", state, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 10 * 60 * 1000
-    });
-
-    // Spotify permissions
-    const scope = [
-        "user-read-private",
-        "user-read-email"
-    ].join(" ");
-
-    const params = new URLSearchParams({
-        response_type: "code",
-        client_id: clientId,
-        scope,
-        redirect_uri: redirectUri,
-        state
-    });
-
-    // Redirect user to Spotify login
-    res.redirect(
-        `https://accounts.spotify.com/authorize?${params.toString()}`
-    );
+  res.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
 });
 
-
+// 2. Handle Spotify authorization callback
 router.get("/callback", async (req, res) => {
-    const { code, state, error } = req.query;
+  const { code, state, error } = req.query;
 
-    // Check whether Spotify returned an error
-    if (error) {
-        return res.status(400).json({
-            error: "Spotify authorization failed",
-            details: error
-        });
+  // Read state from cookie
+  const cookies = Object.fromEntries(
+    (req.headers.cookie || "")
+      .split(";")
+      .map((cookie) => cookie.trim().split("="))
+      .filter((parts) => parts.length === 2),
+  );
+
+  const savedState = cookies.spotify_auth_state;
+
+  // Delete state cookie after use
+  res.clearCookie("spotify_auth_state", {
+    httpOnly: true,
+    sameSite: "lax",
+  });
+
+  // Verify state to prevent CSRF attacks
+  if (!savedState || typeof state !== "string" || state !== savedState) {
+    return res.status(400).send("Invalid authorization state");
+  }
+
+  if (error) {
+    return res.redirect(getFrontendUrl("/host?spotify=denied"));
+  }
+
+  if (typeof code !== "string") {
+    return res.status(400).send("Authorization code missing");
+  }
+
+  try {
+    // 3. Exchange authorization code for tokens
+    const credentials = Buffer.from(
+      `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`,
+    ).toString("base64");
+
+    const response = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${credentials}`,
+      },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code: code,
+        redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Spotify token request failed:", response.status);
+
+      return res.status(502).send("Spotify token request failed");
     }
 
-    // Read the state stored during login
-    const cookies = Object.fromEntries(
-        (req.headers.cookie || "")
-            .split(";")
-            .map(cookie => cookie.trim())
-            .filter(Boolean)
-            .map(cookie => {
-                const index = cookie.indexOf("=");
-                return [
-                    cookie.slice(0, index),
-                    cookie.slice(index + 1)
-                ];
-            })
+    const tokens = await response.json();
+
+    // 4. Fetch Spotify user information
+    const userResponse = await fetch("https://api.spotify.com/v1/me", {
+      headers: {
+        Authorization: `Bearer ${tokens.access_token}`,
+      },
+    });
+
+    if (!userResponse.ok) {
+      console.error("Failed to fetch Spotify user:", userResponse.status);
+
+      return res.status(502).send("Failed to fetch Spotify user");
+    }
+
+    const spotifyUser = await userResponse.json();
+
+    console.log("Spotify user ID:", spotifyUser.id);
+
+    // 5. Calculate access token expiration
+    const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
+
+    // 6. Encrypt and save tokens in MongoDB
+    await SpotifyToken.findOneAndUpdate(
+      { spotifyUserId: spotifyUser.id },
+      {
+        $set: {
+          accessToken: encrypt(tokens.access_token),
+          refreshToken: encrypt(tokens.refresh_token),
+          expiresAt: expiresAt,
+        },
+      },
+      {
+        upsert: true,
+        returnDocument: "after",
+        runValidators: true,
+      },
     );
 
-    const storedState = cookies.spotify_auth_state;
+    console.log("Spotify tokens saved successfully");
 
-    // Clear state cookie after reading it
-    res.clearCookie("spotify_auth_state", {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production"
+    // 7. Save Spotify user ID in the session
+    req.session.spotifyUserId = spotifyUser.id;
+
+    await new Promise((resolve, reject) => {
+      req.session.save((error) => {
+        if (error) {
+          return reject(error);
+        }
+        resolve();
+      });
     });
 
-    // Validate authorization code and state
-    if (
-        typeof code !== "string" ||
-        typeof state !== "string" ||
-        typeof storedState !== "string" ||
-        !/^[a-f0-9]{32}$/.test(state) ||
-        !crypto.timingSafeEqual(
-            Buffer.from(state),
-            Buffer.from(
-                /^[a-f0-9]{32}$/.test(storedState)
-                    ? storedState
-                    : "0".repeat(32)
-            )
-        )
-    ) {
-        return res.status(400).json({
-            error: "Invalid authorization code or state"
-        });
-    }
+    console.log("Spotify user session saved successfully");
 
-    try {
-        const clientId = process.env.SPOTIFY_CLIENT_ID;
-        const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-        const redirectUri = process.env.SPOTIFY_REDIRECT_URI;
-
-        if (!clientId || !clientSecret || !redirectUri) {
-            return res.status(500).json({
-                error: "Spotify configuration missing"
-            });
-        }
-
-        // Exchange authorization code for tokens
-        const response = await fetch(
-            "https://accounts.spotify.com/api/token",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type":
-                        "application/x-www-form-urlencoded",
-                    "Authorization":
-                        "Basic " +
-                        Buffer.from(
-                            `${clientId}:${clientSecret}`
-                        ).toString("base64")
-                },
-                body: new URLSearchParams({
-                    grant_type: "authorization_code",
-                    code,
-                    redirect_uri: redirectUri
-                })
-            }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            console.error(
-                "Spotify token exchange failed:",
-                response.status,
-                data.error
-            );
-
-            return res.status(502).json({
-                error: "Spotify token exchange failed"
-            });
-        }
-
-        
-// Fetch Spotify user profile
-const profileResponse = await fetch(
-    "https://api.spotify.com/v1/me",
-    {
-        headers: {
-            Authorization: `Bearer ${data.access_token}`
-        }
-    }
-);
-
-if (!profileResponse.ok) {
-    return res.status(502).json({
-        error: "Failed to fetch Spotify profile"
+    console.log("Spotify authorization successful", {
+      accessTokenReceived: Boolean(tokens.access_token),
+      refreshTokenReceived: Boolean(tokens.refresh_token),
     });
-}
 
-const profile = await profileResponse.json();
+    return res.redirect(getFrontendUrl("/host?spotify=connected"));
+  } catch (error) {
+    console.error("Spotify authorization error:", error.message);
 
-if (
-    !profile.id ||
-    !data.access_token ||
-    !data.refresh_token ||
-    !Number.isFinite(data.expires_in)
-) {
-    return res.status(502).json({
-        error: "Incomplete Spotify response"
-    });
-}
-
-// Encrypt and store tokens
-await SpotifyToken.findOneAndUpdate(
-    { spotifyUserId: profile.id },
-    {
-        $set: {
-            accessToken: encrypt(data.access_token),
-            refreshToken: encrypt(data.refresh_token),
-            expiresAt: new Date(
-                Date.now() + data.expires_in * 1000
-            )
-        }
-    },
-    {
-        upsert: true,
-        new: true,
-        runValidators: true
-    }
-);
-
-
-        // Temporary test response - do not expose tokens
-        return res.status(200).json({
-            message: "Spotify authentication successful",
-            accessTokenReceived:
-                typeof data.access_token === "string",
-            refreshTokenReceived:
-                typeof data.refresh_token === "string",
-            expiresIn: data.expires_in
-        });
-
-    } catch (error) {
-        console.error("Spotify callback error:", error);
-
-        return res.status(500).json({
-            error: "Spotify callback failed"
-        });
-    }
+    return res.status(500).send("Authorization failed");
+  }
 });
 
+// 8. Get currently authenticated Spotify user
+router.get("/me", async (req, res) => {
+  // Check if the user has a Spotify session
+  if (!req.session?.spotifyUserId) {
+    return res.status(401).json({
+      error: "Not authenticated with Spotify",
+    });
+  }
+
+  try {
+    const spotifyUserId = req.session.spotifyUserId;
+
+    // Get valid access token (refresh automatically if expired)
+    const accessToken = await getValidAccessToken(spotifyUserId);
+
+    // Fetch user information from Spotify
+    const response = await fetch("https://api.spotify.com/v1/me", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: "Failed to fetch Spotify user",
+      });
+    }
+
+    const user = await response.json();
+
+    // Return only the information needed by the frontend
+    return res.json({
+      id: user.id,
+      displayName: user.display_name,
+      image: user.images?.[0]?.url || null,
+    });
+  } catch (error) {
+    console.error("Spotify /me error:", error.message);
+
+    return res.status(500).json({
+      error: "Failed to retrieve Spotify user",
+    });
+  }
+});
 
 module.exports = router;

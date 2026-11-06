@@ -1,80 +1,66 @@
-
 const SpotifyToken = require("../models/SpotifyToken");
-const { encrypt, decrypt } = require("./tokenCrypto");
+const { encrypt, decrypt } = require("./encryption");
 
 async function getValidAccessToken(spotifyUserId) {
-    const tokenDoc = await SpotifyToken.findOne({
-        spotifyUserId
-    });
+  // 1. Find stored tokens
+  const storedToken = await SpotifyToken.findOne({
+    spotifyUserId,
+  });
 
-    if (!tokenDoc) {
-        throw new Error("Spotify user not authenticated");
-    }
+  if (!storedToken) {
+    throw new Error("Spotify user is not connected");
+  }
+  if (
+    !storedToken.expiresAt ||
+    !Number.isFinite(storedToken.expiresAt.getTime())
+  ) {
+    throw new Error("Stored Spotify token has an invalid expiration");
+  }
 
-    // Return existing token if still valid
-    // Refresh 60 seconds before expiration
-    if (tokenDoc.expiresAt.getTime() > Date.now() + 60000) {
-        return decrypt(tokenDoc.accessToken);
-    }
+  // 2. Check whether access token is still valid
+  const expiresAt = storedToken.expiresAt.getTime();
 
-    // Refresh expired access token
-    const refreshToken = decrypt(tokenDoc.refreshToken);
+  if (Date.now() < expiresAt - 60_000) {
+    return decrypt(storedToken.accessToken);
+  }
 
-    const clientId = process.env.SPOTIFY_CLIENT_ID;
-    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+  // 3. Access token expired: request a new one
+  const credentials = Buffer.from(
+    `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`,
+  ).toString("base64");
 
-    if (!clientId || !clientSecret) {
-        throw new Error("Spotify configuration missing");
-    }
+  const response = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${credentials}`,
+    },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: decrypt(storedToken.refreshToken),
+    }),
+  });
 
-    const response = await fetch(
-        "https://accounts.spotify.com/api/token",
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: "Basic " +
-                    Buffer.from(
-                        `${clientId}:${clientSecret}`
-                    ).toString("base64")
-            },
-            body: new URLSearchParams({
-                grant_type: "refresh_token",
-                refresh_token: refreshToken
-            })
-        }
-    );
+  if (!response.ok) {
+    throw new Error(`Spotify token refresh failed: ${response.status}`);
+  }
 
-    if (!response.ok) {
-        throw new Error(
-            `Spotify token refresh failed: ${response.status}`
-        );
-    }
+  const tokens = await response.json();
 
-    const data = await response.json();
+  // 4. Update access token and expiration time
+  const update = {
+    accessToken: encrypt(tokens.access_token),
+    expiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+  };
 
-    if (
-        typeof data.access_token !== "string" ||
-        !Number.isFinite(data.expires_in)
-    ) {
-        throw new Error("Invalid Spotify token response");
-    }
+  // Spotify may return a new refresh token
+  if (tokens.refresh_token) {
+    update.refreshToken = encrypt(tokens.refresh_token);
+  }
 
-    // Save refreshed tokens
-    tokenDoc.accessToken = encrypt(data.access_token);
+  await SpotifyToken.updateOne({ spotifyUserId }, { $set: update });
 
-    // Spotify may return a new refresh token
-    if (data.refresh_token) {
-        tokenDoc.refreshToken = encrypt(data.refresh_token);
-    }
-
-    tokenDoc.expiresAt = new Date(
-        Date.now() + data.expires_in * 1000
-    );
-
-    await tokenDoc.save();
-
-    return data.access_token;
+  return tokens.access_token;
 }
 
 module.exports = { getValidAccessToken };

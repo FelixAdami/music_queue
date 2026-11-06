@@ -1,24 +1,24 @@
 import "./App.css";
-import CurrentSong from "./components/CurrentSong";
-import NextSongsList from "./components/NextSongsList";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import CreateRoom from "./pages/CreateRoom";
+import HostRoom from "./pages/HostRoom";
+import JoinRoom from "./pages/JoinRoom";
+import NotFound from "./pages/NotFound";
+import HomePage from "./pages/HomePage";
 
 function App() {
   return (
     <>
-      <section id="center">
-        <div>
-          <h1>Currently Playing</h1>
-          <p>
-            Edit by <b>drag and drop</b> or delete by clicking <b>🗑︎</b>{" "}
-          </p>
-        </div>
-        {/* here we insert song currently playing */}
-        <CurrentSong />
-        {/* here we have the list of upcoming songs */}
-        <NextSongsList />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/host" element={<CreateRoom />} />
+          <Route path="/room/:roomId" element={<HostRoom />} />
+          <Route path="/join/:roomId" element={<JoinRoom />} />
 
-        <button className="btn">**Create Room**</button>
-      </section>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
     </>
   );
 }

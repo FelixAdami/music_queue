@@ -1,9 +1,16 @@
+const dns = require("node:dns");
+dns.setServers(["8.8.8.8"]);
+
 require("dotenv").config();
+
 
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const roomRoutes = require("./routes/rooms");
+const songRoutes = require("./routes/songs");
+const spotifyRoutes = require("./routes/spotify");
+const spotifySearchRoutes = require("./routes/spotifySearch");
 const spotifyRoutes = require("./routes/spotify");
 const session = require("express-session");
 const { MongoStore } = require("connect-mongo");
@@ -57,6 +64,9 @@ app.use(
 );
 
 app.use("/api/rooms", roomRoutes);
+app.use("/api/rooms", songRoutes);
+app.use("/auth", spotifyRoutes);
+app.use("/api/spotify", spotifySearchRoutes);
 
 app.use("/api/spotify", spotifyRoutes);
 

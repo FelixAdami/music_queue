@@ -1,61 +1,106 @@
-import coverImg from "../assets/Even_in_Arcadia.jpg";
-import "../style/CurrentSong.css";
-import Timestamp from "../helpers/Timestamp";
 
-function CurrentSong() {
-  {
-    /* these should be fetched from the DB */
+import { useEffect, useState } from "react";
+import {
+  getCurrentSong,
+  nextSong,
+  type Song,
+} from "../api/client";
+import "../style/CurrentSong.css";
+
+type Props = {
+  roomId: string;
+};
+
+function CurrentSong({ roomId }: Props) {
+  const [song, setSong] = useState<Song | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadCurrentSong() {
+      try {
+        const data = await getCurrentSong(roomId);
+
+        if (active) {
+          setSong(data.currentSong);
+          setError("");
+        }
+      } catch {
+        if (active) {
+          setError("Could not load current song.");
+        }
+      }
+    }
+
+    void loadCurrentSong();
+
+    const interval = window.setInterval(() => {
+      void loadCurrentSong();
+    }, 3000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [roomId]);
+
+  async function handleNext() {
+    if (loading) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await nextSong(roomId);
+      setSong(data.currentSong);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not select next song."
+      );
+    } finally {
+      setLoading(false);
+    }
   }
-  const songName = "Even in Arcadia";
-  const artistName = "SleepToken";
-  const timeTotal = 125000;
-  const timeDone = 25000; // add here something that counts
-  const timeLeft = timeTotal - timeDone;
-  const progress = (timeDone / timeTotal) * 100;
 
   return (
     <div
       id="currentSong"
       className="d-flex align-items-center gap-3 p-3 rounded-4 bg-dark text-white shadow"
     >
-      <img
-        src={coverImg}
-        className="rounded-3 flex-shrink-0"
-        width={120}
-        height={120}
-        style={{ objectFit: "cover" }}
-        alt="Song cover"
-      />
+      {song?.imageUrl && (
+        <img
+          src={song.imageUrl}
+          alt={`${song.title} cover`}
+          width={120}
+          height={120}
+          className="rounded-3"
+          style={{ objectFit: "cover" }}
+        />
+      )}
+
       <div className="flex-grow-1">
-        <div className="d-flex align-items-center justify-content-between">
-          <div>
-            <h2>{songName}</h2>
-            <h3>{artistName}</h3>
-          </div>
-          <div className="pe-3">
-            <h2>
-              <pre>
-                <button className="btn">⏮</button> {} <button className="btn">▶</button> {} <button className="btn">⏭</button>
-              </pre>
-            </h2>
-          </div>
-        </div>
+        <h3>{song?.title ?? "No song selected"}</h3>
+        <p>{song?.artist ?? "Add songs to the queue to get started."}</p>
 
-        <div className="d-flex align-items-center gap-2 mt-4">
-          <small className="text-secondary">{Timestamp(timeDone)}</small>
+        <button
+          className="btn btn-success"
+          onClick={handleNext}
+          disabled={loading}
+        >
+          {loading ? "Loading..." : "⏭ Next Song"}
+        </button>
 
-          <div className="progress flex-grow-1" style={{ height: "5px" }}>
-            <div
-              className="progress-bar bg-success"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          <small className="text-secondary">{Timestamp(timeLeft)}</small>
-        </div>
+        {error && (
+          <p role="alert" className="text-warning mt-2">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
 export default CurrentSong;
+

@@ -4,6 +4,7 @@ import { ApiError, getRoomHostStatus } from "../api/client";
 import CurrentSong from "../components/CurrentSong";
 import HostQrCode from "../components/HostQrCode";
 import NextSongsList from "../components/NextSongsList";
+import SongSearch from "../components/SongSearch";
 
 type HostCheck =
   | { roomId: string; status: "loading" }
@@ -100,8 +101,9 @@ function HostRoom() {
             <h2>Currently Playing</h2>
             <p>Queue controls will appear here.</p>
           </div>
-          <CurrentSong />
-          <NextSongsList />
+          <CurrentSong roomId={currentRoomId} />
+<NextSongsList roomId={currentRoomId} />
+<SongSearch roomId={currentRoomId} />
         </section>
       </div>
     </>

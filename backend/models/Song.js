@@ -39,7 +39,12 @@ const songSchema = new mongoose.Schema({
     addedAt: {
         type: Date,
         default: Date.now
-    }
+    },
+
+    playedAt: {
+    type: Date,
+    default: null
+}
 });
 
 module.exports = mongoose.model("Song", songSchema);

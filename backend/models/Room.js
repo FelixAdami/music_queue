@@ -12,6 +12,12 @@ const roomSchema = new mongoose.Schema({
         required: true
     },
 
+    currentSongId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Song",
+    default: null
+},
+
     createdAt: {
         type: Date,
         default: Date.now

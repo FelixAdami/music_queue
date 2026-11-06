@@ -103,8 +103,10 @@ router.get("/:id/songs", async (req, res) => {
             });
         }
 
-        const songs = await Song.find({ roomId: id })
-            .sort({ addedAt: 1, _id: 1 });
+        const songs = await Song.find({
+    roomId: id,
+    playedAt: null
+}).sort({ addedAt: 1, _id: 1 });
 
         return res.status(200).json(songs);
 
@@ -294,5 +296,113 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
         });
     }
 });
+
+
+ // 5. Select the next song (host only)
+router.post("/:id/songs/next", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({
+                error: "Invalid room ID"
+            });
+        }
+
+        const room = await Room.findById(id);
+
+        if (!room) {
+            return res.status(404).json({
+                error: "Room not found"
+            });
+        }
+
+        if (
+            !req.session?.spotifyUserId ||
+            room.hostSpotifyId !== req.session.spotifyUserId
+        ) {
+            return res.status(403).json({
+                error: "Only the host can skip songs"
+            });
+        }
+
+        // Find the oldest song that has not been played
+        const nextSong = await Song.findOne({
+            roomId: room._id,
+            playedAt: null
+        }).sort({ addedAt: 1, _id: 1 });
+
+        if (!nextSong) {
+            return res.status(404).json({
+                error: "Queue is empty"
+            });
+        }
+
+        // Mark the song as played
+        nextSong.playedAt = new Date();
+        await nextSong.save();
+
+        // Save the current song
+        room.currentSongId = nextSong._id;
+        await room.save();
+
+        return res.status(200).json({
+            message: "Next song selected",
+            currentSong: nextSong
+        });
+
+    } catch (error) {
+        console.error("Error selecting next song:", error);
+
+        return res.status(500).json({
+            error: "Failed to select next song"
+        });
+    }
+});
+
+
+ // 6. Get the current song of a room
+router.get("/:id/songs/current", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({
+                error: "Invalid room ID"
+            });
+        }
+
+        const room = await Room.findById(id);
+
+        if (!room) {
+            return res.status(404).json({
+                error: "Room not found"
+            });
+        }
+
+        if (!room.currentSongId) {
+            return res.status(200).json({
+                currentSong: null
+            });
+        }
+
+        const currentSong = await Song.findOne({
+            _id: room.currentSongId,
+            roomId: room._id
+        });
+
+        return res.status(200).json({
+            currentSong
+        });
+
+    } catch (error) {
+        console.error("Error fetching current song:", error);
+
+        return res.status(500).json({
+            error: "Failed to fetch current song"
+        });
+    }
+});
+
 
 module.exports = router;

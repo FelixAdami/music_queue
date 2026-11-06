@@ -92,3 +92,68 @@ export function startSpotifyLogin() {
 }
 
 // add later /api/rooms/:id/host <- for authentication
+
+export type Song = {
+  _id: string;
+  roomId: string;
+  spotifyId: string;
+  title: string;
+  artist: string;
+  durationMs: number;
+  imageUrl?: string | null;
+  spotifyUrl?: string | null;
+  addedAt: string;
+  playedAt: string | null;
+};
+
+// Get all waiting songs
+export function getQueue(roomId: string) {
+  return requestJson<Song[]>(
+    `/api/rooms/${encodeURIComponent(roomId)}/songs`
+  );
+}
+
+// Get the currently selected song
+export function getCurrentSong(roomId: string) {
+  return requestJson<{ currentSong: Song | null }>(
+    `/api/rooms/${encodeURIComponent(roomId)}/songs/current`
+  );
+}
+
+// Add a Spotify track to the queue
+export function addSpotifySong(roomId: string, spotifyId: string) {
+  return requestJson<Song>(
+    `/api/rooms/${encodeURIComponent(roomId)}/songs/from-spotify`,
+    {
+      method: "POST",
+      body: JSON.stringify({ spotifyId }),
+    }
+  );
+}
+
+// Select the next song (host only)
+export function nextSong(roomId: string) {
+  return requestJson<{ message: string; currentSong: Song }>(
+    `/api/rooms/${encodeURIComponent(roomId)}/songs/next`,
+    {
+      method: "POST",
+    }
+  );
+}
+
+
+export type SpotifySearchResult = {
+  spotifyId: string;
+  title: string;
+  artist: string;
+  durationMs: number;
+  imageUrl: string | null;
+  spotifyUrl: string | null;
+};
+
+export function searchSpotifySongs(query: string) {
+  return requestJson<SpotifySearchResult[]>(
+    `/api/spotify/search?q=${encodeURIComponent(query)}`
+  );
+}
+

@@ -1,23 +1,7 @@
-import { useState, type SubmitEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import "../style/HomePage.css";
 
 function HomePage() {
-  const navigate = useNavigate();
-  const [roomId, setRoomId] = useState("");
-  const [error, setError] = useState("");
-
-  function handleJoinRoom(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const trimmedRoomId = roomId.trim();
-
-    if (!trimmedRoomId) {
-      setError("Enter a room code to continue.");
-      return;
-    }
-
-    navigate(`/join/${encodeURIComponent(trimmedRoomId)}`);
-  }
 
   return (
     <main className="home-page">

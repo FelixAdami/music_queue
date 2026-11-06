@@ -15,6 +15,9 @@ const songRoutes = require("./routes/songs");
 const spotifyRoutes = require("./routes/spotify");
 const spotifySearchRoutes = require("./routes/spotifySearch");
 
+const Room = require("./models/Room");
+const { checkRoomPlayback } = require("./services/playbackMonitor");
+
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -81,8 +84,7 @@ app.use(session({
 // 6. Spotify login redirect
 // Ensures the login and callback use the same host
 app.get("/api/spotify/login", (req, res) => {
-    const backendOrigin =
-        `http://127.0.0.1:${PORT}`;
+    const backendOrigin = `http://127.0.0.1:${PORT}`;
 
     return res.redirect(
         `${backendOrigin}/auth/login`
@@ -100,7 +102,36 @@ app.use("/api/spotify", spotifyRoutes);
 // Spotify search
 app.use("/api/spotify", spotifySearchRoutes);
 
-// 8. Start server
+// 8. Playback monitoring
+let playbackCheckRunning = false;
+
+async function monitorPlayback() {
+    // Prevent overlapping monitoring cycles
+    if (playbackCheckRunning) {
+        return;
+    }
+
+    playbackCheckRunning = true;
+
+    try {
+        const rooms = await Room.find({
+            currentSongId: { $ne: null },
+            lastSpotifyTrackId: { $ne: null }
+        });
+
+        for (const room of rooms) {
+            await checkRoomPlayback(room);
+        }
+
+    } catch (error) {
+        console.error("Playback monitor error:", error);
+
+    } finally {
+        playbackCheckRunning = false;
+    }
+}
+
+// 9. Start server
 async function startServer() {
     try {
         await mongoose.connect(process.env.MONGODB_URI);
@@ -110,6 +141,11 @@ async function startServer() {
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
         });
+
+        // Check Spotify playback every 5 seconds
+        setInterval(monitorPlayback, 5000);
+
+        console.log("Playback monitor started");
 
     } catch (error) {
         console.error(

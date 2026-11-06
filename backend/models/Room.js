@@ -18,6 +18,11 @@ const roomSchema = new mongoose.Schema({
     default: null
 },
 
+lastSpotifyTrackId: {
+    type: String,
+    default: null
+},
+
     createdAt: {
         type: Date,
         default: Date.now

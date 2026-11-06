@@ -6,6 +6,7 @@ import {
   type Song,
 } from "../api/client";
 import "../style/CurrentSong.css";
+import Player from "./Player";
 
 type Props = {
   roomId: string;
@@ -13,36 +14,39 @@ type Props = {
 
 function CurrentSong({ roomId }: Props) {
   const [song, setSong] = useState<Song | null>(null);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
 
     async function loadCurrentSong() {
       try {
-        const data = await getCurrentSong(roomId);
+        const result = await getCurrentSong(roomId);
 
         if (active) {
-          setSong(data.currentSong);
-          setError("");
+          setSong(result.currentSong);
         }
-      } catch {
+      } catch (err) {
         if (active) {
-          setError("Could not load current song.");
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Could not load current song"
+          );
         }
       }
     }
 
     void loadCurrentSong();
 
-    const interval = window.setInterval(() => {
+    const interval = setInterval(() => {
       void loadCurrentSong();
     }, 3000);
 
     return () => {
       active = false;
-      window.clearInterval(interval);
+      clearInterval(interval);
     };
   }, [roomId]);
 
@@ -53,11 +57,13 @@ function CurrentSong({ roomId }: Props) {
     setError("");
 
     try {
-      const data = await nextSong(roomId);
-      setSong(data.currentSong);
+      const result = await nextSong(roomId);
+      setSong(result.currentSong);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Could not select next song."
+        err instanceof Error
+          ? err.message
+          : "Could not select next song"
       );
     } finally {
       setLoading(false);
@@ -72,20 +78,30 @@ function CurrentSong({ roomId }: Props) {
       {song?.imageUrl && (
         <img
           src={song.imageUrl}
-          alt={`${song.title} cover`}
+          className="rounded-3 flex-shrink-0"
           width={120}
           height={120}
-          className="rounded-3"
           style={{ objectFit: "cover" }}
+          alt="Song cover"
         />
       )}
 
       <div className="flex-grow-1">
-        <h3>{song?.title ?? "No song selected"}</h3>
-        <p>{song?.artist ?? "Add songs to the queue to get started."}</p>
+        <div className="d-flex align-items-center justify-content-between">
+          <div>
+            <h2>{song?.title ?? "No song selected"}</h2>
+            <h3>
+              {song?.artist ??
+                "Add songs to the queue to get started."}
+            </h3>
+          </div>
+
+          <Player />
+        </div>
 
         <button
-          className="btn btn-success"
+          type="button"
+          className="btn btn-success mt-3"
           onClick={handleNext}
           disabled={loading}
         >
@@ -103,4 +119,5 @@ function CurrentSong({ roomId }: Props) {
 }
 
 export default CurrentSong;
+
 

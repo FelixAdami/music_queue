@@ -99,7 +99,6 @@ function HostRoom() {
         <section className="col" id="center">
           <div>
             <h2>Currently Playing</h2>
-            <p>Queue controls will appear here.</p>
           </div>
           <CurrentSong roomId={currentRoomId} />
 <NextSongsList roomId={currentRoomId} />

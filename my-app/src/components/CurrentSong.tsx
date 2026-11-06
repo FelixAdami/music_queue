@@ -6,7 +6,6 @@ import {
   type Song,
 } from "../api/client";
 import "../style/CurrentSong.css";
-import Player from "./Player";
 
 type Props = {
   roomId: string;
@@ -96,7 +95,7 @@ function CurrentSong({ roomId }: Props) {
             </h3>
           </div>
 
-          <Player />
+          
         </div>
 
         <button

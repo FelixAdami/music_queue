@@ -3,6 +3,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const Room = require("../models/Room");
 const Song = require("../models/Song");
+const { getValidAccessToken } = require("../utils/spotifyAuth");
+const { playNextSong } = require("../services/queuePlayback");
 
 const router = express.Router();
 
@@ -15,6 +17,13 @@ function canAddSongs(req, room) {
         req.session?.joinedRoomId === room._id.toString();
 
     return isHost || hasJoined;
+}
+
+function isRoomHost(req, room) {
+    return Boolean(
+        req.session?.spotifyUserId &&
+        req.session.spotifyUserId === room.hostSpotifyId
+    );
 }
 
 // 1. Add a song manually
@@ -298,7 +307,7 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
 });
 
 
- // 5. Select the next song (host only)
+
 router.post("/:id/songs/next", async (req, res) => {
     try {
         const { id } = req.params;
@@ -317,34 +326,21 @@ router.post("/:id/songs/next", async (req, res) => {
             });
         }
 
-        if (
-            !req.session?.spotifyUserId ||
-            room.hostSpotifyId !== req.session.spotifyUserId
-        ) {
+        // Only the host can skip songs
+        if (!isRoomHost(req, room)) {
             return res.status(403).json({
                 error: "Only the host can skip songs"
             });
         }
 
-        // Find the oldest song that has not been played
-        const nextSong = await Song.findOne({
-            roomId: room._id,
-            playedAt: null
-        }).sort({ addedAt: 1, _id: 1 });
+        // Start the next song using our shared service
+        const nextSong = await playNextSong(room);
 
         if (!nextSong) {
             return res.status(404).json({
                 error: "Queue is empty"
             });
         }
-
-        // Mark the song as played
-        nextSong.playedAt = new Date();
-        await nextSong.save();
-
-        // Save the current song
-        room.currentSongId = nextSong._id;
-        await room.save();
 
         return res.status(200).json({
             message: "Next song selected",
@@ -359,6 +355,7 @@ router.post("/:id/songs/next", async (req, res) => {
         });
     }
 });
+
 
 
  // 6. Get the current song of a room
@@ -403,6 +400,135 @@ router.get("/:id/songs/current", async (req, res) => {
         });
     }
 });
+
+
+router.put("/:id/playback/pause", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({
+                error: "Invalid room ID"
+            });
+        }
+
+        const room = await Room.findById(id);
+
+        if (!room) {
+            return res.status(404).json({
+                error: "Room not found"
+            });
+        }
+
+        if (!isRoomHost(req, room)) {
+            return res.status(403).json({
+                error: "Only the host can pause playback"
+            });
+        }
+
+        const accessToken = await getValidAccessToken(
+            req.session.spotifyUserId
+        );
+
+        const response = await fetch(
+            "https://api.spotify.com/v1/me/player/pause",
+            {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
+        );
+
+        if (!response.ok) {
+            console.error(
+                "Spotify pause failed:",
+                response.status,
+                await response.text()
+            );
+
+            return res.status(502).json({
+                error: "Could not pause Spotify playback"
+            });
+        }
+
+        return res.status(200).json({
+            message: "Playback paused"
+        });
+
+    } catch (error) {
+        console.error("Room playback pause error:", error);
+
+        return res.status(500).json({
+            error: "Failed to pause playback"
+        });
+    }
+});
+
+
+router.put("/:id/playback/resume", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({
+                error: "Invalid room ID"
+            });
+        }
+
+        const room = await Room.findById(id);
+
+        if (!room) {
+            return res.status(404).json({
+                error: "Room not found"
+            });
+        }
+
+        if (!isRoomHost(req, room)) {
+            return res.status(403).json({
+                error: "Only the host can resume playback"
+            });
+        }
+
+        const accessToken = await getValidAccessToken(
+            req.session.spotifyUserId
+        );
+
+        const response = await fetch(
+            "https://api.spotify.com/v1/me/player/play",
+            {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
+        );
+
+        if (!response.ok) {
+            console.error(
+                "Spotify resume failed:",
+                response.status,
+                await response.text()
+            );
+
+            return res.status(502).json({
+                error: "Could not resume Spotify playback"
+            });
+        }
+
+        return res.status(200).json({
+            message: "Playback resumed"
+        });
+
+    } catch (error) {
+        console.error("Room playback resume error:", error);
+
+        return res.status(500).json({
+            error: "Failed to resume playback"
+        });
+    }
+});
+
 
 
 module.exports = router;

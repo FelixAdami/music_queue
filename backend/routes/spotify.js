@@ -239,4 +239,253 @@ router.get("/me", async (req, res) => {
   }
 });
 
+
+router.get("/devices", async (req, res) => {
+  if (!req.session?.spotifyUserId) {
+    return res.status(401).json({
+      error: "Spotify login required",
+    });
+  }
+
+  try {
+    const accessToken = await getValidAccessToken(
+      req.session.spotifyUserId
+    );
+
+    const response = await fetch(
+      "https://api.spotify.com/v1/me/player/devices",
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: "Failed to fetch Spotify devices",
+      });
+    }
+
+    const data = await response.json();
+
+    return res.json({
+      devices: data.devices,
+    });
+  } catch (error) {
+    console.error("Spotify devices error:", error);
+
+    return res.status(500).json({
+      error: "Could not retrieve Spotify devices",
+    });
+  }
+});
+
+
+router.put("/play", async (req, res) => {
+  if (!req.session?.spotifyUserId) {
+    return res.status(401).json({
+      error: "Spotify login required",
+    });
+  }
+
+  const { spotifyId } = req.body;
+
+  if (
+    typeof spotifyId !== "string" ||
+    !/^[a-zA-Z0-9]{22}$/.test(spotifyId)
+  ) {
+    return res.status(400).json({
+      error: "Valid Spotify track ID required",
+    });
+  }
+
+  try {
+    const accessToken = await getValidAccessToken(
+      req.session.spotifyUserId
+    );
+
+    const response = await fetch(
+      "https://api.spotify.com/v1/me/player/play",
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          uris: [`spotify:track:${spotifyId}`],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const details = await response.text();
+      console.error("Spotify playback error:", response.status, details);
+
+      return res.status(response.status).json({
+        error: "Spotify could not start playback",
+      });
+    }
+
+    return res.json({
+      message: "Playback started",
+    });
+  } catch (error) {
+    console.error("Spotify play error:", error);
+
+    return res.status(500).json({
+      error: "Failed to start playback",
+    });
+  }
+});
+
+
+
+router.put("/pause", async (req, res) => {
+  if (!req.session?.spotifyUserId) {
+    return res.status(401).json({
+      error: "Spotify login required",
+    });
+  }
+
+  try {
+    const accessToken = await getValidAccessToken(
+      req.session.spotifyUserId
+    );
+
+    const response = await fetch(
+      "https://api.spotify.com/v1/me/player/pause",
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const details = await response.text();
+
+      console.error("Spotify pause error:", response.status, details);
+
+      return res.status(response.status).json({
+        error: "Could not pause Spotify playback",
+      });
+    }
+
+    return res.json({
+      message: "Playback paused",
+    });
+  } catch (error) {
+    console.error("Spotify pause error:", error);
+
+    return res.status(500).json({
+      error: "Failed to pause playback",
+    });
+  }
+});
+
+
+router.put("/resume", async (req, res) => {
+  if (!req.session?.spotifyUserId) {
+    return res.status(401).json({
+      error: "Spotify login required",
+    });
+  }
+
+  try {
+    const accessToken = await getValidAccessToken(
+      req.session.spotifyUserId
+    );
+
+    const response = await fetch(
+      "https://api.spotify.com/v1/me/player/play",
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const details = await response.text();
+
+      console.error("Spotify resume error:", response.status, details);
+
+      return res.status(response.status).json({
+        error: "Could not resume Spotify playback",
+      });
+    }
+
+    return res.json({
+      message: "Playback resumed",
+    });
+  } catch (error) {
+    console.error("Spotify resume error:", error);
+
+    return res.status(500).json({
+      error: "Failed to resume playback",
+    });
+  }
+});
+
+router.get("/playback/status", async (req, res) => {
+    try {
+        const spotifyUserId = req.session?.spotifyUserId;
+
+        if (!spotifyUserId) {
+            return res.status(401).json({
+                error: "Not logged in with Spotify"
+            });
+        }
+
+        const accessToken = await getValidAccessToken(spotifyUserId);
+
+        const response = await fetch(
+            "https://api.spotify.com/v1/me/player",
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
+        );
+
+        if (response.status === 204) {
+            return res.json({
+                isPlaying: false,
+                track: null
+            });
+        }
+
+        if (!response.ok) {
+            return res.status(502).json({
+                error: "Could not get Spotify playback status"
+            });
+        }
+
+        const data = await response.json();
+
+        return res.json({
+            isPlaying: data.is_playing,
+            progressMs: data.progress_ms,
+            durationMs: data.item?.duration_ms ?? null,
+            track: data.item ? {
+                spotifyId: data.item.id,
+                title: data.item.name,
+                artist: data.item.artists
+                    .map(artist => artist.name)
+                    .join(", ")
+            } : null
+        });
+
+    } catch (error) {
+        console.error("Playback status error:", error);
+        return res.status(500).json({
+            error: "Failed to get playback status"
+        });
+    }
+});
+
 module.exports = router;

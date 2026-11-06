@@ -16,16 +16,19 @@ const spotifyRoutes = require("./routes/spotify");
 const spotifySearchRoutes = require("./routes/spotifySearch");
 
 const app = express();
+
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === "production";
 
+// 1. Proxy configuration
 if (isProduction) {
     app.set("trust proxy", 1);
 }
 
-// CORS configuration
+// 2. CORS configuration
 const allowedOrigins = (
-    process.env.FRONTEND_ORIGINS || "http://localhost:5173"
+    process.env.FRONTEND_ORIGINS ||
+    "http://localhost:5173,http://127.0.0.1:5173"
 )
     .split(",")
     .map(origin => origin.trim())
@@ -37,14 +40,17 @@ app.use(cors({
             return callback(null, true);
         }
 
-        return callback(new Error("Origin is not allowed by CORS"));
+        return callback(
+            new Error("Origin is not allowed by CORS")
+        );
     },
     credentials: true
 }));
 
+// 3. JSON middleware
 app.use(express.json());
 
-// Session configuration
+// 4. Required environment variables
 if (!process.env.SESSION_SECRET) {
     throw new Error("SESSION_SECRET is missing");
 }
@@ -53,6 +59,7 @@ if (!process.env.MONGODB_URI) {
     throw new Error("MONGODB_URI is missing");
 }
 
+// 5. Session configuration
 app.use(session({
     name: "music_queue.sid",
     secret: process.env.SESSION_SECRET,
@@ -71,13 +78,29 @@ app.use(session({
     }
 }));
 
-// API routes
+// 6. Spotify login redirect
+// Ensures the login and callback use the same host
+app.get("/api/spotify/login", (req, res) => {
+    const backendOrigin =
+        `http://127.0.0.1:${PORT}`;
+
+    return res.redirect(
+        `${backendOrigin}/auth/login`
+    );
+});
+
+// 7. API routes
 app.use("/api/rooms", roomRoutes);
 app.use("/api/rooms", songRoutes);
+
+// Spotify authentication
 app.use("/auth", spotifyRoutes);
+app.use("/api/spotify", spotifyRoutes);
+
+// Spotify search
 app.use("/api/spotify", spotifySearchRoutes);
 
-// Start server
+// 8. Start server
 async function startServer() {
     try {
         await mongoose.connect(process.env.MONGODB_URI);
@@ -89,7 +112,11 @@ async function startServer() {
         });
 
     } catch (error) {
-        console.error("Failed to start server:", error.message);
+        console.error(
+            "Failed to start server:",
+            error.message
+        );
+
         process.exit(1);
     }
 }

@@ -25,8 +25,6 @@ declare global {
   }
 }
 
-const SDK_URL = "https://sdk.scdn.co/spotify-player.js";
-
 function Player() {
   const playerRef = useRef<SpotifyPlayerInstance | null>(null);
   const [status, setStatus] = useState<SpotifyPlayerState>("loading");
@@ -78,28 +76,10 @@ function Player() {
       void player.connect();
     };
 
-    // The SDK script is already included in index.html. If it has not finished
-    // loading yet, register its callback and reuse the existing script element.
     if (window.Spotify) {
       initializePlayer();
     } else {
       window.onSpotifyWebPlaybackSDKReady = initializePlayer;
-      const existingScript = document.querySelector<HTMLScriptElement>(
-        `script[src="${SDK_URL}"]`,
-      );
-
-      if (!existingScript) {
-        const script = document.createElement("script");
-        script.src = SDK_URL;
-        script.async = true;
-        script.onerror = () => {
-          if (isMounted) {
-            setStatus("error");
-            setMessage("Could not load the Spotify Web Playback SDK.");
-          }
-        };
-        document.body.appendChild(script);
-      }
     }
 
     return () => {

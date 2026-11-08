@@ -20,6 +20,15 @@ export type RoomHostStatus = {
   roomName: string;
 };
 
+export type PlaybackStatus = {
+  hasCurrentSong: boolean;
+  isCurrentTrack: boolean;
+  isPlaying: boolean;
+  isPaused: boolean;
+  hasActiveDevice: boolean;
+  spotifyId: string | null;
+};
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -69,7 +78,9 @@ export function createRoom(name: string) {
 }
 
 export function getRoom(roomId: string) {
-  return requestJson<Room>(`/api/rooms/${encodeURIComponent(roomId)}`);
+  return requestJson<Room>(
+    `/api/rooms/${encodeURIComponent(roomId)}`
+  );
 }
 
 export function joinRoom(roomId: string) {
@@ -142,6 +153,12 @@ export function resumePlayback(roomId: string) {
   return requestJson<{ message: string }>(
     `/api/rooms/${encodeURIComponent(roomId)}/playback/resume`,
     { method: "PUT" }
+  );
+}
+
+export function getPlaybackStatus(roomId: string) {
+  return requestJson<PlaybackStatus>(
+    `/api/rooms/${encodeURIComponent(roomId)}/playback/status`
   );
 }
 

@@ -1,6 +1,10 @@
+
 const express = require("express");
 const mongoose = require("mongoose");
 const Room = require("../models/Room");
+const {
+  getSpotifyPlaybackStatus,
+} = require("../services/spotifyPlayback");
 
 const router = express.Router();
 
@@ -51,7 +55,7 @@ async function requireRoomHost(req, res, next) {
   }
 }
 
-// 1. Create a new room (authenticated users only)
+// 1. Create a new room
 router.post("/", requireSpotifyAuth, async (req, res) => {
   try {
     const { name } = req.body;
@@ -77,7 +81,7 @@ router.post("/", requireSpotifyAuth, async (req, res) => {
   }
 });
 
-// 2. Get room by ID (public)
+// 2. Get room by ID
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -131,15 +135,14 @@ router.post("/:id/join", async (req, res) => {
       });
     }
 
-    // Remember which room this guest joined
     req.session.joinedRoomId = room._id.toString();
 
-    // Save session before confirming successful join
     await new Promise((resolve, reject) => {
       req.session.save((error) => {
         if (error) {
           return reject(error);
         }
+
         resolve();
       });
     });
@@ -157,13 +160,59 @@ router.post("/:id/join", async (req, res) => {
   }
 });
 
-// 4. Check whether the authenticated user is the room host
-router.get("/:id/host", requireSpotifyAuth, requireRoomHost, (req, res) => {
-  return res.status(200).json({
-    isHost: true,
-    roomId: req.room._id,
-    roomName: req.room.name,
-  });
-});
+// 4. Check whether user is room host
+router.get(
+  "/:id/host",
+  requireSpotifyAuth,
+  requireRoomHost,
+  (req, res) => {
+    return res.status(200).json({
+      isHost: true,
+      roomId: req.room._id,
+      roomName: req.room.name,
+    });
+  }
+);
+
+// 5. Get actual Spotify playback status
+router.get(
+  "/:id/playback/status",
+  requireSpotifyAuth,
+  requireRoomHost,
+  async (req, res) => {
+    try {
+      const room = req.room;
+
+      const playback = await getSpotifyPlaybackStatus(
+        room.hostSpotifyId
+      );
+
+      const isCurrentTrack = Boolean(
+        room.currentSongId &&
+        room.lastSpotifyTrackId &&
+        playback?.spotifyId === room.lastSpotifyTrackId
+      );
+
+      return res.status(200).json({
+        hasCurrentSong: Boolean(room.currentSongId),
+        isCurrentTrack,
+        isPlaying: Boolean(
+          isCurrentTrack && playback?.isPlaying
+        ),
+        isPaused: Boolean(
+          isCurrentTrack && !playback?.isPlaying
+        ),
+        hasActiveDevice: playback !== null,
+        spotifyId: playback?.spotifyId ?? null,
+      });
+    } catch (error) {
+      console.error("Playback status error:", error);
+
+      return res.status(502).json({
+        error: "Could not retrieve Spotify playback status",
+      });
+    }
+  }
+);
 
 module.exports = router;

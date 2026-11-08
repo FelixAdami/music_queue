@@ -1,10 +1,12 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   getCurrentSong,
+  getPlaybackStatus,
   nextSong,
   pausePlayback,
   resumePlayback,
+  type PlaybackStatus,
   type Song,
 } from "../api/client";
 import "../style/CurrentSong.css";
@@ -15,48 +17,53 @@ type Props = {
 
 function CurrentSong({ roomId }: Props) {
   const [song, setSong] = useState<Song | null>(null);
+  const [status, setStatus] = useState<PlaybackStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [playbackLoading, setPlaybackLoading] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
   const [error, setError] = useState("");
+
+  const actionInProgress = useRef(false);
 
   useEffect(() => {
     let active = true;
+    let fetching = false;
 
     setSong(null);
-    setIsPaused(false);
-    setHasStarted(false);
+    setStatus(null);
+    setError("");
 
-    async function loadCurrentSong() {
+    async function refresh() {
+      if (fetching || actionInProgress.current) return;
+
+      fetching = true;
+
       try {
-        const result = await getCurrentSong(roomId);
+        const [songResult, playbackResult] = await Promise.all([
+          getCurrentSong(roomId),
+          getPlaybackStatus(roomId),
+        ]);
 
-        if (active) {
-          setSong(result.currentSong);
-
-          if (result.currentSong) {
-            setHasStarted(true);
-          } else {
-            setHasStarted(false);
-            setIsPaused(false);
-          }
+        if (active && !actionInProgress.current) {
+          setSong(songResult.currentSong);
+          setStatus(playbackResult);
         }
       } catch (err) {
-        if (active) {
+        if (active && !actionInProgress.current) {
           setError(
             err instanceof Error
               ? err.message
-              : "Could not load current song"
+              : "Could not load playback status"
           );
         }
+      } finally {
+        fetching = false;
       }
     }
 
-    void loadCurrentSong();
+    void refresh();
 
     const interval = setInterval(() => {
-      void loadCurrentSong();
+      void refresh();
     }, 3000);
 
     return () => {
@@ -65,67 +72,80 @@ function CurrentSong({ roomId }: Props) {
     };
   }, [roomId]);
 
+  async function refreshAfterAction() {
+    const [songResult, playbackResult] = await Promise.all([
+      getCurrentSong(roomId),
+      getPlaybackStatus(roomId),
+    ]);
+
+    setSong(songResult.currentSong);
+    setStatus(playbackResult);
+  }
+
+  function showError(err: unknown) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Could not control playback"
+    );
+  }
+
   async function handleNext() {
     if (loading || playbackLoading) return;
 
+    actionInProgress.current = true;
     setLoading(true);
     setError("");
 
     try {
       const result = await nextSong(roomId);
-
       setSong(result.currentSong);
-      setHasStarted(result.currentSong !== null);
-      setIsPaused(false);
+      await refreshAfterAction();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Could not select next song"
-      );
+      showError(err);
     } finally {
+      actionInProgress.current = false;
       setLoading(false);
     }
   }
 
   async function handlePlaybackToggle() {
-    if (playbackLoading || loading) return;
+    if (loading || playbackLoading || !status) return;
 
+    actionInProgress.current = true;
     setPlaybackLoading(true);
     setError("");
 
     try {
-      if (!hasStarted || !song) {
-        // Start the first song from the queue
-        const result = await nextSong(roomId);
-
-        if (!result.currentSong) {
-          setError("Queue is empty. Add a song first.");
-          return;
-        }
-
-        setSong(result.currentSong);
-        setHasStarted(true);
-        setIsPaused(false);
-      } else if (isPaused) {
-        // Resume the paused song
-        await resumePlayback(roomId);
-        setIsPaused(false);
-      } else {
-        // Pause the currently playing song
+      if (status.isPlaying) {
         await pausePlayback(roomId);
-        setIsPaused(true);
+        setStatus((previous) =>
+          previous
+            ? { ...previous, isPlaying: false, isPaused: true }
+            : previous
+        );
+      } else if (status.isCurrentTrack) {
+        await resumePlayback(roomId);
+        setStatus((previous) =>
+          previous
+            ? { ...previous, isPlaying: true, isPaused: false }
+            : previous
+        );
+      } else {
+        const result = await nextSong(roomId);
+        setSong(result.currentSong);
       }
+
+      await refreshAfterAction();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Could not control playback"
-      );
+      showError(err);
     } finally {
+      actionInProgress.current = false;
       setPlaybackLoading(false);
     }
   }
+
+  const isPlaying = status?.isPlaying ?? false;
 
   return (
     <div
@@ -159,13 +179,17 @@ function CurrentSong({ roomId }: Props) {
             type="button"
             className="btn btn-success"
             onClick={handlePlaybackToggle}
-            disabled={playbackLoading || loading}
+            disabled={
+              loading ||
+              playbackLoading ||
+              status === null
+            }
           >
             {playbackLoading
               ? "Loading..."
-              : !hasStarted || isPaused
-                ? "▶ Play"
-                : "⏸ Pause"}
+              : isPlaying
+                ? "⏸ Pause"
+                : "▶ Play"}
           </button>
 
           <button
@@ -189,4 +213,3 @@ function CurrentSong({ roomId }: Props) {
 }
 
 export default CurrentSong;
-

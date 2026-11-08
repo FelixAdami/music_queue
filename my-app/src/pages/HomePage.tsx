@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
-import "../style/HomePage.css";
+import "../style/HomePageAlternative.css";
 
 function HomePage() {
-
   return (
     <main className="home-page">
       <div className="home-content">

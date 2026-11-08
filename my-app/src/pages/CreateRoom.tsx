@@ -7,6 +7,7 @@ import {
   startSpotifyLogin,
   type SpotifyUser,
 } from "../api/client";
+import "../style/CreateRoom.css";
 
 function CreateRoom() {
   const navigate = useNavigate();
@@ -83,43 +84,79 @@ function CreateRoom() {
   }
 
   if (checkingSpotify) {
-    return <p>Checking your Spotify connection...</p>;
+    return (
+      <main className="create-room-page">
+        <div className="create-room-content">
+          <section
+          className="create-room-card"
+          aria-labelledby="create-room-title"
+          >
+            <p className="create-room-eyebrow">Spotify setup</p>
+            <h1 id="create-room-title">Create a music room</h1>
+            <p className="create-room-status" role="status">
+              Checking your Spotify connection...
+            </p>
+          </section>
+        </div>
+      </main>
+    );
   }
 
   return (
-    <main className="container py-4">
-      <h1>Create a music room</h1>
+    <main className="create-room-page">
+      <div className="create-room-content">
+        <section
+          className="create-room-card"
+          aria-labelledby="create-room-title"
+        >
+          <p className="create-room-eyebrow">Spotify setup</p>
+          <h1 id="create-room-title">Create a music room</h1>
 
-      {error && <p role="alert">{error}</p>}
+          {error && (
+            <p className="create-room-error" role="alert">
+              {error}
+            </p>
+          )}
 
-      {!spotifyUser ? (
-        <>
-          <p>Connect Spotify to create and host a room.</p>
-          <button type="button" onClick={startSpotifyLogin}>
-            Connect Spotify
-          </button>
-        </>
-      ) : (
-        <>
-          <p>
-            Connected to Spotify as {spotifyUser.displayName || spotifyUser.id}.
-          </p>
-          <form onSubmit={handleCreateRoom}>
-            <label htmlFor="party-name">Party name</label>
-            <input
-              id="party-name"
-              name="partyName"
-              value={roomName}
-              onChange={(event) => setRoomName(event.target.value)}
-              maxLength={100}
-              required
-            />
-            <button type="submit" disabled={creatingRoom}>
-              {creatingRoom ? "Creating room..." : "Create music room"}
-            </button>
-          </form>
-        </>
-      )}
+          {!spotifyUser ? (
+            <div className="create-room-body">
+              <p>Connect Spotify to create and host a room.</p>
+              <button
+                className="create-room-button"
+                type="button"
+                onClick={startSpotifyLogin}
+              >
+                Connect Spotify
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className="create-room-status">
+                Connected to Spotify as{' '}
+                {spotifyUser.displayName || spotifyUser.id}.
+              </p>
+              <form className="create-room-form" onSubmit={handleCreateRoom}>
+                <label htmlFor="party-name">Party name</label>
+                <input
+                  id="party-name"
+                  name="partyName"
+                  value={roomName}
+                  onChange={(event) => setRoomName(event.target.value)}
+                  maxLength={100}
+                  required
+                />
+                <button
+                  className="create-room-button"
+                  type="submit"
+                  disabled={creatingRoom}
+                >
+                  {creatingRoom ? "Creating room..." : "Create music room"}
+                </button>
+              </form>
+            </>
+          )}
+        </section>
+      </div>
     </main>
   );
 }

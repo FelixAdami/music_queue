@@ -1,0 +1,160 @@
+@font-face {
+  font-family: "CalteoDemo";
+  src: url("../assets/font/CalteoDemoRegular-8OvrZ.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+.create-room-page {
+  --create-room-ink: #101010;
+  --create-room-cream: #e2dac9;
+  --create-room-muted: #aaa8a8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+  min-height: 100svh;
+  box-sizing: border-box;
+  padding: clamp(20px, 4vw, 48px) 20px 28px;
+  color: var(--create-room-cream);
+  text-align: left;
+  background: linear-gradient(112deg, #244467 0%, #52677d 48%, #e2dac9 100%);
+}
+
+.create-room-content {
+  width: min(100%, 1040px);
+  margin: 0 auto;
+}
+
+.create-room-card {
+  width: min(100%, 780px);
+  margin: 0 auto;
+  padding: clamp(32px, 5vw, 56px);
+  box-sizing: border-box;
+  border-radius: 24px;
+  background: var(--create-room-ink);
+  text-align: center;
+  color: var(--create-room-cream);
+}
+
+.create-room-eyebrow {
+  margin: 0 0 14px;
+  color: var(--create-room-muted);
+  text-align: left;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.create-room-card h1 {
+  margin: 0;
+  color: #f4f0eb;
+  font-family: "CalteoDemo", var(--heading, var(--sans, system-ui, sans-serif));
+  font-size: clamp(2.2rem, 5.2vw, 4.25rem);
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+
+.create-room-body,
+.create-room-status {
+  margin-top: 24px;
+  color: #e6e1dc;
+}
+
+.create-room-error {
+  margin: 24px 0 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #c97c80;
+  color: #171113;
+  font-size: 0.95rem;
+}
+
+.create-room-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 32px;
+}
+
+.create-room-form label {
+  color: #f4f0eb;
+  font-weight: 650;
+}
+
+.create-room-form input {
+  width: 100%;
+  min-height: 52px;
+  box-sizing: border-box;
+  padding: 10px 13px;
+  border: 1px solid #625f5b;
+  border-radius: 10px;
+  background: #1c1c1c;
+  color: #f4f0eb;
+  font: inherit;
+  text-align: center;
+}
+
+.create-room-form input:focus-visible {
+  outline: 3px solid var(--create-room-cream);
+  outline-offset: 2px;
+}
+
+.create-room-button {
+  justify-self: center;
+  min-height: 52px;
+  margin-top: 18px;
+  padding: 14px 30px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--create-room-cream);
+  color: #101010;
+  font: inherit;
+  text-align: center;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.create-room-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #f0eadd;
+}
+
+.create-room-button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.create-room-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+@media (max-width: 680px) {
+  .create-room-page {
+    padding: 20px 16px 28px;
+  }
+
+  .create-room-card {
+    padding: 30px 24px;
+    border-radius: 20px;
+  }
+
+  .create-room-button {
+    justify-self: center;
+    min-width: 220px;
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .create-room-button {
+    transition: none;
+  }
+}

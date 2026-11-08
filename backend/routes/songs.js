@@ -4,6 +4,7 @@ const Room = require("../models/Room");
 const Song = require("../models/Song");
 const { getValidAccessToken } = require("../utils/spotifyAuth");
 const { playNextSong } = require("../services/queuePlayback");
+const { getSongGenre } = require("../services/songGenre");
 
 const router = express.Router();
 
@@ -376,6 +377,40 @@ router.get("/:id/songs/current", async (req, res) => {
   }
 });
 
+router.get("/:id/songs/:songId/genre", async (req, res) => {
+  try {
+    const { id, songId } = req.params;
+    if (!mongoose.isValidObjectId(id) || !mongoose.isValidObjectId(songId)) {
+      return res.status(400).json({ error: "Invalid room ID" });
+    }
+
+    const room = await Room.findById(id);
+    if (!room) return res.status(404).json({ error: "Room not found" });
+    if (room.currentSongId?.toString() !== songId) {
+      return res.status(409).json({ error: "Song is no longer current" });
+    }
+
+    const song = await Song.findOne({
+      _id: songId,
+      roomId: room._id,
+    });
+    if (!song) return res.status(404).json({ error: "Current song not found" });
+
+    const genre = await getSongGenre(song);
+    if (!genre) {
+      return res.status(404).json({
+        error: "Lyrics are not available for this song",
+      });
+    }
+
+    return res.status(200).json(genre);
+  } catch (error) {
+    console.error("Current song genre analysis failed:", error);
+    return res.status(502).json({
+      error: "Could not analyze the current song lyrics",
+    });
+  }
+});
 router.put("/:id/playback/pause", async (req, res) => {
   try {
     const { id } = req.params;

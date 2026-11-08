@@ -9,6 +9,7 @@ import {
   type PlaybackStatus,
   type Song,
 } from "../api/client";
+import SongGenreInfo from "./SongGenreInfo";
 import "../style/CurrentSong.css";
 
 type Props = {
@@ -172,6 +173,13 @@ function CurrentSong({ roomId }: Props) {
                 "Add songs to the queue to get started."}
             </h3>
           </div>
+          {song && (
+            <SongGenreInfo
+              key={song._id}
+              roomId={roomId}
+              songId={song._id}
+            />
+          )}
         </div>
 
         <div className="d-flex flex-wrap gap-2 mt-3">

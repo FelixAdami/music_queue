@@ -28,6 +28,15 @@ export type PlaybackStatus = {
   hasActiveDevice: boolean;
   spotifyId: string | null;
 };
+export type SongGenre = {
+  genre: string[];
+  subgenres: string[];
+  themes: string[];
+  mood: string[];
+  language: string;
+  confidence: number;
+  explanation: string;
+};
 
 export class ApiError extends Error {
   readonly status: number;
@@ -122,6 +131,11 @@ export function getQueue(roomId: string) {
 export function getCurrentSong(roomId: string) {
   return requestJson<{ currentSong: Song | null }>(
     `/api/rooms/${encodeURIComponent(roomId)}/songs/current`
+  );
+}
+export function getCurrentSongGenre(roomId: string, songId: string) {
+  return requestJson<SongGenre>(
+    `/api/rooms/${encodeURIComponent(roomId)}/songs/${encodeURIComponent(songId)}/genre`
   );
 }
 

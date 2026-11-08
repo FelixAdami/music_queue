@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import {
   getCurrentSong,
   nextSong,
+  pausePlayback,
+  resumePlayback,
   type Song,
 } from "../api/client";
 import "../style/CurrentSong.css";
@@ -14,10 +16,17 @@ type Props = {
 function CurrentSong({ roomId }: Props) {
   const [song, setSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState(false);
+  const [playbackLoading, setPlaybackLoading] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
+
+    setSong(null);
+    setIsPaused(false);
+    setHasStarted(false);
 
     async function loadCurrentSong() {
       try {
@@ -25,6 +34,13 @@ function CurrentSong({ roomId }: Props) {
 
         if (active) {
           setSong(result.currentSong);
+
+          if (result.currentSong) {
+            setHasStarted(true);
+          } else {
+            setHasStarted(false);
+            setIsPaused(false);
+          }
         }
       } catch (err) {
         if (active) {
@@ -50,14 +66,17 @@ function CurrentSong({ roomId }: Props) {
   }, [roomId]);
 
   async function handleNext() {
-    if (loading) return;
+    if (loading || playbackLoading) return;
 
     setLoading(true);
     setError("");
 
     try {
       const result = await nextSong(roomId);
+
       setSong(result.currentSong);
+      setHasStarted(result.currentSong !== null);
+      setIsPaused(false);
     } catch (err) {
       setError(
         err instanceof Error
@@ -66,6 +85,45 @@ function CurrentSong({ roomId }: Props) {
       );
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handlePlaybackToggle() {
+    if (playbackLoading || loading) return;
+
+    setPlaybackLoading(true);
+    setError("");
+
+    try {
+      if (!hasStarted || !song) {
+        // Start the first song from the queue
+        const result = await nextSong(roomId);
+
+        if (!result.currentSong) {
+          setError("Queue is empty. Add a song first.");
+          return;
+        }
+
+        setSong(result.currentSong);
+        setHasStarted(true);
+        setIsPaused(false);
+      } else if (isPaused) {
+        // Resume the paused song
+        await resumePlayback(roomId);
+        setIsPaused(false);
+      } else {
+        // Pause the currently playing song
+        await pausePlayback(roomId);
+        setIsPaused(true);
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not control playback"
+      );
+    } finally {
+      setPlaybackLoading(false);
     }
   }
 
@@ -94,18 +152,31 @@ function CurrentSong({ roomId }: Props) {
                 "Add songs to the queue to get started."}
             </h3>
           </div>
-
-          
         </div>
 
-        <button
-          type="button"
-          className="btn btn-success mt-3"
-          onClick={handleNext}
-          disabled={loading}
-        >
-          {loading ? "Loading..." : "⏭ Next Song"}
-        </button>
+        <div className="d-flex flex-wrap gap-2 mt-3">
+          <button
+            type="button"
+            className="btn btn-success"
+            onClick={handlePlaybackToggle}
+            disabled={playbackLoading || loading}
+          >
+            {playbackLoading
+              ? "Loading..."
+              : !hasStarted || isPaused
+                ? "▶ Play"
+                : "⏸ Pause"}
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-outline-light"
+            onClick={handleNext}
+            disabled={loading || playbackLoading}
+          >
+            {loading ? "Loading..." : "⏭ Next Song"}
+          </button>
+        </div>
 
         {error && (
           <p role="alert" className="text-warning mt-2">
@@ -118,5 +189,4 @@ function CurrentSong({ roomId }: Props) {
 }
 
 export default CurrentSong;
-
 

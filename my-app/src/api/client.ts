@@ -1,3 +1,4 @@
+
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
 export type Room = {
@@ -19,13 +20,19 @@ export type RoomHostStatus = {
   roomName: string;
 };
 
+export type PlaybackStatus = {
+  hasCurrentSong: boolean;
+  isCurrentTrack: boolean;
+  isPlaying: boolean;
+  isPaused: boolean;
+  hasActiveDevice: boolean;
+  spotifyId: string | null;
+};
+
 export class ApiError extends Error {
   readonly status: number;
 
-  constructor(
-    message: string,
-    status: number,
-  ) {
+  constructor(message: string, status: number) {
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -43,6 +50,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   const payload: unknown = await response.json().catch(() => null);
+
   if (!response.ok) {
     const message =
       typeof payload === "object" &&
@@ -51,13 +59,12 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
       typeof payload.error === "string"
         ? payload.error
         : `API request failed (${response.status})`;
+
     throw new ApiError(message, response.status);
   }
 
   return payload as T;
 }
-
-// frontend wrapper for the api endpoints - to import them easier into react components
 
 export function getCurrentSpotifyUser() {
   return requestJson<SpotifyUser>("/api/spotify/me");
@@ -71,27 +78,27 @@ export function createRoom(name: string) {
 }
 
 export function getRoom(roomId: string) {
-  return requestJson<Room>(`/api/rooms/${encodeURIComponent(roomId)}`);
+  return requestJson<Room>(
+    `/api/rooms/${encodeURIComponent(roomId)}`
+  );
 }
 
 export function joinRoom(roomId: string) {
   return requestJson<{ roomId: string; roomName: string }>(
     `/api/rooms/${encodeURIComponent(roomId)}/join`,
-    { method: "POST" },
+    { method: "POST" }
   );
 }
 
 export function getRoomHostStatus(roomId: string) {
   return requestJson<RoomHostStatus>(
-    `/api/rooms/${encodeURIComponent(roomId)}/host`,
+    `/api/rooms/${encodeURIComponent(roomId)}/host`
   );
 }
 
 export function startSpotifyLogin() {
   window.location.assign(`${API_BASE_URL}/api/spotify/login`);
 }
-
-// add later /api/rooms/:id/host <- for authentication
 
 export type Song = {
   _id: string;
@@ -106,21 +113,18 @@ export type Song = {
   playedAt: string | null;
 };
 
-// Get all waiting songs
 export function getQueue(roomId: string) {
   return requestJson<Song[]>(
     `/api/rooms/${encodeURIComponent(roomId)}/songs`
   );
 }
 
-// Get the currently selected song
 export function getCurrentSong(roomId: string) {
   return requestJson<{ currentSong: Song | null }>(
     `/api/rooms/${encodeURIComponent(roomId)}/songs/current`
   );
 }
 
-// Add a Spotify track to the queue
 export function addSpotifySong(roomId: string, spotifyId: string) {
   return requestJson<Song>(
     `/api/rooms/${encodeURIComponent(roomId)}/songs/from-spotify`,
@@ -131,16 +135,32 @@ export function addSpotifySong(roomId: string, spotifyId: string) {
   );
 }
 
-// Select the next song (host only)
 export function nextSong(roomId: string) {
-  return requestJson<{ message: string; currentSong: Song }>(
+  return requestJson<{ message: string; currentSong: Song | null }>(
     `/api/rooms/${encodeURIComponent(roomId)}/songs/next`,
-    {
-      method: "POST",
-    }
+    { method: "POST" }
   );
 }
 
+export function pausePlayback(roomId: string) {
+  return requestJson<{ message: string }>(
+    `/api/rooms/${encodeURIComponent(roomId)}/playback/pause`,
+    { method: "PUT" }
+  );
+}
+
+export function resumePlayback(roomId: string) {
+  return requestJson<{ message: string }>(
+    `/api/rooms/${encodeURIComponent(roomId)}/playback/resume`,
+    { method: "PUT" }
+  );
+}
+
+export function getPlaybackStatus(roomId: string) {
+  return requestJson<PlaybackStatus>(
+    `/api/rooms/${encodeURIComponent(roomId)}/playback/status`
+  );
+}
 
 export type SpotifySearchResult = {
   spotifyId: string;
@@ -156,4 +176,5 @@ export function searchSpotifySongs(query: string) {
     `/api/spotify/search?q=${encodeURIComponent(query)}`
   );
 }
+
 

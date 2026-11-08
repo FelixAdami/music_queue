@@ -62,15 +62,15 @@ router.get("/callback", async (req, res) => {
   });
 
   // Verify state to prevent CSRF attacks
-if (!savedState || typeof state !== "string" || state !== savedState) {
-  return res.status(400).send("Invalid authorization state");
-}
+  if (!savedState || typeof state !== "string" || state !== savedState) {
+    return res.status(400).send("Invalid authorization state");
+  }
 
-// Handle denied or failed Spotify authorization
-if (error) {
-  console.warn("Spotify authorization denied or failed:", error);
-  return res.redirect(getFrontendUrl("/host?spotify=denied"));
-}
+  // Handle denied or failed Spotify authorization
+  if (error) {
+    console.warn("Spotify authorization denied or failed:", error);
+    return res.redirect(getFrontendUrl("/host?spotify=denied"));
+  }
 
   if (typeof code !== "string") {
     return res.status(400).send("Authorization code missing");
@@ -103,19 +103,19 @@ if (error) {
 
     const tokens = await response.json();
 
-// Validate tokens before using or storing them
-if (
-  typeof tokens.access_token !== "string" ||
-  !tokens.access_token ||
-  typeof tokens.refresh_token !== "string" ||
-  !tokens.refresh_token ||
-  !Number.isFinite(tokens.expires_in) ||
-  tokens.expires_in <= 0
-) {
-  console.error("Spotify returned an invalid token response");
+    // Validate tokens before using or storing them
+    if (
+      typeof tokens.access_token !== "string" ||
+      !tokens.access_token ||
+      typeof tokens.refresh_token !== "string" ||
+      !tokens.refresh_token ||
+      !Number.isFinite(tokens.expires_in) ||
+      tokens.expires_in <= 0
+    ) {
+      console.error("Spotify returned an invalid token response");
 
-  return res.status(502).send("Invalid Spotify token response");
-}
+      return res.status(502).send("Invalid Spotify token response");
+    }
 
     // 4. Fetch Spotify user information
     const userResponse = await fetch("https://api.spotify.com/v1/me", {
@@ -157,27 +157,27 @@ if (
     console.log("Spotify tokens saved successfully");
 
     // 7. Regenerate session after successful authentication
-await new Promise((resolve, reject) => {
-  req.session.regenerate((error) => {
-    if (error) {
-      return reject(error);
-    }
-    resolve();
-  });
-});
+    await new Promise((resolve, reject) => {
+      req.session.regenerate((error) => {
+        if (error) {
+          return reject(error);
+        }
+        resolve();
+      });
+    });
 
-// Store the authenticated Spotify user
-req.session.spotifyUserId = spotifyUser.id;
+    // Store the authenticated Spotify user
+    req.session.spotifyUserId = spotifyUser.id;
 
-// Save the new session before redirecting
-await new Promise((resolve, reject) => {
-  req.session.save((error) => {
-    if (error) {
-      return reject(error);
-    }
-    resolve();
-  });
-});
+    // Save the new session before redirecting
+    await new Promise((resolve, reject) => {
+      req.session.save((error) => {
+        if (error) {
+          return reject(error);
+        }
+        resolve();
+      });
+    });
 
     console.log("Spotify user session saved successfully");
 
@@ -239,7 +239,6 @@ router.get("/me", async (req, res) => {
   }
 });
 
-
 router.get("/devices", async (req, res) => {
   if (!req.session?.spotifyUserId) {
     return res.status(401).json({
@@ -248,9 +247,7 @@ router.get("/devices", async (req, res) => {
   }
 
   try {
-    const accessToken = await getValidAccessToken(
-      req.session.spotifyUserId
-    );
+    const accessToken = await getValidAccessToken(req.session.spotifyUserId);
 
     const response = await fetch(
       "https://api.spotify.com/v1/me/player/devices",
@@ -258,7 +255,7 @@ router.get("/devices", async (req, res) => {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -281,7 +278,6 @@ router.get("/devices", async (req, res) => {
   }
 });
 
-
 router.put("/play", async (req, res) => {
   if (!req.session?.spotifyUserId) {
     return res.status(401).json({
@@ -291,33 +287,25 @@ router.put("/play", async (req, res) => {
 
   const { spotifyId } = req.body;
 
-  if (
-    typeof spotifyId !== "string" ||
-    !/^[a-zA-Z0-9]{22}$/.test(spotifyId)
-  ) {
+  if (typeof spotifyId !== "string" || !/^[a-zA-Z0-9]{22}$/.test(spotifyId)) {
     return res.status(400).json({
       error: "Valid Spotify track ID required",
     });
   }
 
   try {
-    const accessToken = await getValidAccessToken(
-      req.session.spotifyUserId
-    );
+    const accessToken = await getValidAccessToken(req.session.spotifyUserId);
 
-    const response = await fetch(
-      "https://api.spotify.com/v1/me/player/play",
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          uris: [`spotify:track:${spotifyId}`],
-        }),
-      }
-    );
+    const response = await fetch("https://api.spotify.com/v1/me/player/play", {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        uris: [`spotify:track:${spotifyId}`],
+      }),
+    });
 
     if (!response.ok) {
       const details = await response.text();
@@ -340,8 +328,6 @@ router.put("/play", async (req, res) => {
   }
 });
 
-
-
 router.put("/pause", async (req, res) => {
   if (!req.session?.spotifyUserId) {
     return res.status(401).json({
@@ -350,19 +336,14 @@ router.put("/pause", async (req, res) => {
   }
 
   try {
-    const accessToken = await getValidAccessToken(
-      req.session.spotifyUserId
-    );
+    const accessToken = await getValidAccessToken(req.session.spotifyUserId);
 
-    const response = await fetch(
-      "https://api.spotify.com/v1/me/player/pause",
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    const response = await fetch("https://api.spotify.com/v1/me/player/pause", {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
     if (!response.ok) {
       const details = await response.text();
@@ -386,7 +367,6 @@ router.put("/pause", async (req, res) => {
   }
 });
 
-
 router.put("/resume", async (req, res) => {
   if (!req.session?.spotifyUserId) {
     return res.status(401).json({
@@ -395,19 +375,14 @@ router.put("/resume", async (req, res) => {
   }
 
   try {
-    const accessToken = await getValidAccessToken(
-      req.session.spotifyUserId
-    );
+    const accessToken = await getValidAccessToken(req.session.spotifyUserId);
 
-    const response = await fetch(
-      "https://api.spotify.com/v1/me/player/play",
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    const response = await fetch("https://api.spotify.com/v1/me/player/play", {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
     if (!response.ok) {
       const details = await response.text();
@@ -432,60 +407,56 @@ router.put("/resume", async (req, res) => {
 });
 
 router.get("/playback/status", async (req, res) => {
-    try {
-        const spotifyUserId = req.session?.spotifyUserId;
+  try {
+    const spotifyUserId = req.session?.spotifyUserId;
 
-        if (!spotifyUserId) {
-            return res.status(401).json({
-                error: "Not logged in with Spotify"
-            });
-        }
-
-        const accessToken = await getValidAccessToken(spotifyUserId);
-
-        const response = await fetch(
-            "https://api.spotify.com/v1/me/player",
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-        );
-
-        if (response.status === 204) {
-            return res.json({
-                isPlaying: false,
-                track: null
-            });
-        }
-
-        if (!response.ok) {
-            return res.status(502).json({
-                error: "Could not get Spotify playback status"
-            });
-        }
-
-        const data = await response.json();
-
-        return res.json({
-            isPlaying: data.is_playing,
-            progressMs: data.progress_ms,
-            durationMs: data.item?.duration_ms ?? null,
-            track: data.item ? {
-                spotifyId: data.item.id,
-                title: data.item.name,
-                artist: data.item.artists
-                    .map(artist => artist.name)
-                    .join(", ")
-            } : null
-        });
-
-    } catch (error) {
-        console.error("Playback status error:", error);
-        return res.status(500).json({
-            error: "Failed to get playback status"
-        });
+    if (!spotifyUserId) {
+      return res.status(401).json({
+        error: "Not logged in with Spotify",
+      });
     }
+
+    const accessToken = await getValidAccessToken(spotifyUserId);
+
+    const response = await fetch("https://api.spotify.com/v1/me/player", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (response.status === 204) {
+      return res.json({
+        isPlaying: false,
+        track: null,
+      });
+    }
+
+    if (!response.ok) {
+      return res.status(502).json({
+        error: "Could not get Spotify playback status",
+      });
+    }
+
+    const data = await response.json();
+
+    return res.json({
+      isPlaying: data.is_playing,
+      progressMs: data.progress_ms,
+      durationMs: data.item?.duration_ms ?? null,
+      track: data.item
+        ? {
+            spotifyId: data.item.id,
+            title: data.item.name,
+            artist: data.item.artists.map((artist) => artist.name).join(", "),
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error("Playback status error:", error);
+    return res.status(500).json({
+      error: "Failed to get playback status",
+    });
+  }
 });
 
 module.exports = router;

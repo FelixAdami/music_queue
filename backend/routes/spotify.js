@@ -3,6 +3,7 @@ const crypto = require("node:crypto");
 const SpotifyToken = require("../models/SpotifyToken");
 const { encrypt } = require("../utils/encryption");
 const { getValidAccessToken } = require("../utils/spotifyAuth");
+const { sendApiError } = require("../utils/apiError");
 
 const router = express.Router();
 
@@ -230,12 +231,8 @@ router.get("/me", async (req, res) => {
       displayName: user.display_name,
       image: user.images?.[0]?.url || null,
     });
-  } catch (error) {
-    console.error("Spotify /me error:", error.message);
-
-    return res.status(500).json({
-      error: "Failed to retrieve Spotify user",
-    });
+      } catch (error) {
+    return sendApiError(res, error, "Failed to retrieve Spotify user");
   }
 });
 
@@ -269,12 +266,8 @@ router.get("/devices", async (req, res) => {
     return res.json({
       devices: data.devices,
     });
-  } catch (error) {
-    console.error("Spotify devices error:", error);
-
-    return res.status(500).json({
-      error: "Could not retrieve Spotify devices",
-    });
+    } catch (error) {
+    return sendApiError(res, error, "Could not retrieve Spotify devices");
   }
 });
 
@@ -319,12 +312,8 @@ router.put("/play", async (req, res) => {
     return res.json({
       message: "Playback started",
     });
-  } catch (error) {
-    console.error("Spotify play error:", error);
-
-    return res.status(500).json({
-      error: "Failed to start playback",
-    });
+    } catch (error) {
+    return sendApiError(res, error, "Failed to start playback");
   }
 });
 
@@ -358,12 +347,8 @@ router.put("/pause", async (req, res) => {
     return res.json({
       message: "Playback paused",
     });
-  } catch (error) {
-    console.error("Spotify pause error:", error);
-
-    return res.status(500).json({
-      error: "Failed to pause playback",
-    });
+    } catch (error) {
+    return sendApiError(res, error, "Failed to pause playback");
   }
 });
 
@@ -398,11 +383,7 @@ router.put("/resume", async (req, res) => {
       message: "Playback resumed",
     });
   } catch (error) {
-    console.error("Spotify resume error:", error);
-
-    return res.status(500).json({
-      error: "Failed to resume playback",
-    });
+    return sendApiError(res, error, "Failed to resume playback");
   }
 });
 
@@ -451,11 +432,8 @@ router.get("/playback/status", async (req, res) => {
           }
         : null,
     });
-  } catch (error) {
-    console.error("Playback status error:", error);
-    return res.status(500).json({
-      error: "Failed to get playback status",
-    });
+    } catch (error) {
+    return sendApiError(res, error, "Failed to get playback status");
   }
 });
 

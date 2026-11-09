@@ -4,6 +4,7 @@ const Room = require("../models/Room");
 const Song = require("../models/Song");
 const { getValidAccessToken } = require("../utils/spotifyAuth");
 const { playNextSong } = require("../services/queuePlayback");
+const { sendApiError } = require("../utils/apiError");
 
 const router = express.Router();
 
@@ -325,12 +326,12 @@ router.post("/:id/songs/next", async (req, res) => {
       message: "Next song selected",
       currentSong: nextSong,
     });
-  } catch (error) {
-    console.error("Error selecting next song:", error);
-
-    return res.status(500).json({
-      error: "Failed to select next song",
-    });
+    } catch (error) {
+    return sendApiError(
+      res,
+      error,
+      "Failed to select next song"
+    );
   }
 });
 
@@ -376,6 +377,7 @@ router.get("/:id/songs/current", async (req, res) => {
   }
 });
 
+
 router.put("/:id/playback/pause", async (req, res) => {
   try {
     const { id } = req.params;
@@ -400,20 +402,55 @@ router.put("/:id/playback/pause", async (req, res) => {
       });
     }
 
-    const accessToken = await getValidAccessToken(req.session.spotifyUserId);
+    const accessToken = await getValidAccessToken(
+      req.session.spotifyUserId
+    );
 
-    const response = await fetch("https://api.spotify.com/v1/me/player/pause", {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    // Get the current playback position before pausing
+    const statusResponse = await fetch(
+      "https://api.spotify.com/v1/me/player",
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    let positionMs = null;
+
+    if (statusResponse.ok) {
+      const playback = await statusResponse.json();
+
+      // Only save the position of our current queue song
+      if (
+        playback.item?.id === room.lastSpotifyTrackId &&
+        Number.isFinite(playback.progress_ms)
+      ) {
+        positionMs = Math.max(0, playback.progress_ms);
+      }
+    } else if (statusResponse.status !== 204) {
+      console.warn(
+        "Could not retrieve playback position:",
+        statusResponse.status
+      );
+    }
+
+    // Pause Spotify playback
+    const response = await fetch(
+      "https://api.spotify.com/v1/me/player/pause",
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
 
     if (!response.ok) {
       console.error(
         "Spotify pause failed:",
         response.status,
-        await response.text(),
+        await response.text()
       );
 
       return res.status(502).json({
@@ -421,20 +458,30 @@ router.put("/:id/playback/pause", async (req, res) => {
       });
     }
 
+    // Save pause state and last known position
     room.isPaused = true;
+
+    if (positionMs !== null) {
+      room.playbackPositionMs = positionMs;
+      room.playbackPositionUpdatedAt = new Date();
+    }
+
     await room.save();
 
     return res.status(200).json({
       message: "Playback paused",
+      positionMs: room.playbackPositionMs,
     });
   } catch (error) {
-    console.error("Room playback pause error:", error);
-
-    return res.status(500).json({
-      error: "Failed to pause playback",
-    });
+    return sendApiError(
+      res,
+      error,
+      "Failed to pause playback"
+    );
   }
 });
+
+
 
 router.put("/:id/playback/resume", async (req, res) => {
   try {
@@ -460,20 +507,94 @@ router.put("/:id/playback/resume", async (req, res) => {
       });
     }
 
-    const accessToken = await getValidAccessToken(req.session.spotifyUserId);
+    // A song must already be selected
+    if (!room.currentSongId || !room.lastSpotifyTrackId) {
+      return res.status(409).json({
+        error: "No current song to resume",
+        code: "NO_CURRENT_SONG",
+      });
+    }
 
-    const response = await fetch("https://api.spotify.com/v1/me/player/play", {
+    const accessToken = await getValidAccessToken(
+      req.session.spotifyUserId
+    );
+
+    const { findSpotifyDevice, transferSpotifyPlayback } =
+      require("../services/spotifyDevices");
+
+    const device = await findSpotifyDevice(room.hostSpotifyId);
+
+    if (!device) {
+      return res.status(409).json({
+        error: "No Spotify device available. Open Spotify and try again.",
+        code: "NO_SPOTIFY_DEVICE",
+      });
+    }
+
+    // Check what Spotify is currently playing
+    const statusResponse = await fetch(
+      "https://api.spotify.com/v1/me/player",
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    let playback = null;
+
+    if (statusResponse.ok) {
+      playback = await statusResponse.json();
+    } else if (statusResponse.status !== 204) {
+      return res.status(502).json({
+        error: "Could not retrieve Spotify playback status",
+      });
+    }
+
+    const isCurrentTrack =
+      playback?.item?.id === room.lastSpotifyTrackId;
+
+    if (!device.is_active) {
+      await transferSpotifyPlayback(
+        room.hostSpotifyId,
+        device.id
+      );
+    }
+
+    const playUrl =
+      `https://api.spotify.com/v1/me/player/play` +
+      `?device_id=${encodeURIComponent(device.id)}`;
+
+    let body;
+
+    if (isCurrentTrack) {
+      // Resume the already selected Spotify track
+      body = undefined;
+    } else {
+      // Restore our queue song instead of starting the next one
+      body = JSON.stringify({
+        uris: [`spotify:track:${room.lastSpotifyTrackId}`],
+        position_ms: Math.max(
+          0,
+          Math.floor(room.playbackPositionMs ?? 0)
+        ),
+      });
+    }
+
+    const response = await fetch(playUrl, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
       },
+      ...(body ? { body } : {}),
     });
 
     if (!response.ok) {
       console.error(
         "Spotify resume failed:",
         response.status,
-        await response.text(),
+        await response.text()
       );
 
       return res.status(502).json({
@@ -486,14 +607,16 @@ router.put("/:id/playback/resume", async (req, res) => {
 
     return res.status(200).json({
       message: "Playback resumed",
+      restored: !isCurrentTrack,
     });
   } catch (error) {
-    console.error("Room playback resume error:", error);
-
-    return res.status(500).json({
-      error: "Failed to resume playback",
-    });
+    return sendApiError(
+      res,
+      error,
+      "Failed to resume playback"
+    );
   }
 });
+
 
 module.exports = router;

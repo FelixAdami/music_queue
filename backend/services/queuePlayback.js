@@ -80,10 +80,14 @@ async function playNextSong(room) {
     nextSong.playedAt = new Date();
     await nextSong.save();
 
-    // Update the room's current song
     room.currentSongId = nextSong._id;
     room.lastSpotifyTrackId = nextSong.spotifyId;
     room.isPaused = false;
+
+    // Reset saved position for the newly selected song
+    room.playbackPositionMs = 0;
+    room.playbackPositionUpdatedAt = new Date();
+
     await room.save();
 
     return nextSong;

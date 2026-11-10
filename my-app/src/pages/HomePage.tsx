@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import "../style/HomePageAlternative.css";
+import "../style/HomePage.css";
 
 function HomePage() {
   return (

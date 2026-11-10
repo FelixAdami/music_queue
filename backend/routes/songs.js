@@ -388,15 +388,12 @@ router.get("/:id/songs/:songId/genre", async (req, res) => {
 
     const room = await Room.findById(id);
     if (!room) return res.status(404).json({ error: "Room not found" });
-    if (room.currentSongId?.toString() !== songId) {
-      return res.status(409).json({ error: "Song is no longer current" });
-    }
-
+    // Genre analysis is available for any song in this room, including queued songs.
     const song = await Song.findOne({
       _id: songId,
       roomId: room._id,
     });
-    if (!song) return res.status(404).json({ error: "Current song not found" });
+    if (!song) return res.status(404).json({ error: "Song not found in this room" });
 
     const genre = await getSongGenre(song);
     if (!genre) {
@@ -407,9 +404,9 @@ router.get("/:id/songs/:songId/genre", async (req, res) => {
 
     return res.status(200).json(genre);
   } catch (error) {
-    console.error("Current song genre analysis failed:", error);
+    console.error("Song genre analysis failed:", error);
     return res.status(502).json({
-      error: "Could not analyze the current song lyrics",
+      error: "Could not analyze the song lyrics",
     });
   }
 });

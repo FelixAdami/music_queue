@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { getCurrentSongGenre, type SongGenre } from "../api/client";
+import { getSongGenre, type SongGenre } from "../api/client";
 import "../style/SongGenreInfo.css";
 
 type Props = {
@@ -22,7 +22,7 @@ function SongGenreInfo({ roomId, songId }: Props) {
     setError("");
 
     try {
-      const result = await getCurrentSongGenre(roomId, songId);
+      const result = await getSongGenre(roomId, songId);
       setAnalysis(result);
     } catch (err) {
       setError(

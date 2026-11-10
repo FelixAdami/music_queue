@@ -1,0 +1,385 @@
+@font-face {
+  font-family: "CalteoDemo";
+  src: url("../assets/font/CalteoDemoRegular-8OvrZ.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+.host-room-page {
+  --host-ink: #101010;
+  --host-card: #171717;
+  --host-cream: #e2dac9;
+  --host-muted: #aaa8a8;
+  --host-accent: #c97c80;
+  --host-blue: #244467;
+  --host-border: rgba(226, 218, 201, 0.18);
+
+  flex: 1;
+  width: 100%;
+  min-height: 100svh;
+  box-sizing: border-box;
+  padding: clamp(22px, 4vw, 48px) 20px 36px;
+  color: var(--host-cream);
+  background: linear-gradient(125deg, #244467 0%, #52677d 46%, #e2dac9 115%);
+  text-align: left;
+}
+
+.host-room-shell {
+  width: min(100%, 1380px);
+  margin: 0 auto;
+}
+
+.host-room-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+  padding: clamp(24px, 3vw, 38px);
+  border: 1px solid var(--host-border);
+  border-radius: 22px;
+  background: var(--host-ink);
+  box-shadow: 0 18px 50px rgba(16, 16, 16, 0.16);
+}
+
+.host-room-eyebrow {
+  margin: 0 0 10px;
+  color: var(--host-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.host-room-header h1,
+.host-room-state-card h1 {
+  margin: 0;
+  color: #f4f0eb;
+  font-family: "CalteoDemo", var(--heading, var(--sans, system-ui, sans-serif));
+  font-size: clamp(2.25rem, 4.6vw, 3.8rem);
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+
+.host-room-code {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+  min-width: 0;
+  color: var(--host-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.host-room-code code {
+  max-width: min(42vw, 420px);
+  overflow-wrap: anywhere;
+  color: var(--host-cream);
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  text-align: right;
+  text-transform: none;
+}
+
+.host-room-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.8fr);
+  align-items: start;
+  gap: 22px;
+}
+
+.host-room-card {
+  min-width: 0;
+  padding: clamp(20px, 2.5vw, 30px);
+  border: 1px solid var(--host-border);
+  border-radius: 20px;
+  background: var(--host-ink);
+  color: var(--host-cream);
+  box-shadow: 0 18px 50px rgba(16, 16, 16, 0.14);
+}
+
+.host-room-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.host-room-qr h1 {
+  margin: 0 0 12px;
+  color: #f4f0eb;
+  font-family: "CalteoDemo", var(--heading, var(--sans, system-ui, sans-serif));
+  font-size: clamp(1.75rem, 3vw, 2.35rem);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.host-room-qr p {
+  max-width: 100%;
+  color: var(--host-muted);
+  overflow-wrap: anywhere;
+}
+
+.host-room-qr .responsive-qr {
+  width: min(100%, 320px);
+  height: auto;
+  margin: 8px 0;
+  padding: 12px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  background: #f4f0eb;
+}
+
+.host-room-main {
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+}
+
+.host-room-card-heading {
+  margin-bottom: 16px;
+}
+
+.host-room-card-heading h2,
+.host-room-search h2 {
+  margin: 0;
+  color: #f4f0eb;
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  letter-spacing: -0.02em;
+}
+
+.host-room-current #currentSong {
+  width: 100%;
+  max-width: none;
+  border: 1px solid var(--host-border);
+  background: var(--host-card) !important;
+  box-shadow: none !important;
+}
+
+.host-room-lower-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 22px;
+}
+
+.host-room-queue #nextSongsList {
+  width: 100%;
+  max-width: none;
+  max-height: 520px;
+  margin-top: 0 !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-color: #625f5b var(--host-card);
+}
+
+.host-room-queue #nextSongsList > h3 {
+  margin: 0 0 14px;
+  color: #f4f0eb;
+  font-size: 1.3rem;
+}
+
+.host-room-search > section {
+  margin-top: 0 !important;
+  color: var(--host-cream);
+}
+
+.host-room-search form {
+  align-items: stretch;
+}
+
+.host-room-search .form-control {
+  min-width: 0;
+  border-color: #625f5b;
+  background: var(--host-card);
+  color: #f4f0eb;
+}
+
+.host-room-search .form-control::placeholder {
+  color: #aaa8a8;
+}
+
+.host-room-search .form-control:focus {
+  border-color: var(--host-cream);
+  box-shadow: 0 0 0 0.2rem rgba(226, 218, 201, 0.2);
+}
+
+.host-room-page .btn {
+  --bs-btn-padding-x: 1rem;
+  --bs-btn-padding-y: 0.62rem;
+  --bs-btn-border-width: 1px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.host-room-page .btn-success {
+  --bs-btn-bg: #e2dac9;
+  --bs-btn-border-color: #e2dac9;
+  --bs-btn-color: #101010;
+  --bs-btn-hover-bg: #f4f0eb;
+  --bs-btn-hover-border-color: #f4f0eb;
+  --bs-btn-hover-color: #101010;
+}
+
+.host-room-page .btn-primary {
+  --bs-btn-bg: #52677d;
+  --bs-btn-border-color: #52677d;
+  --bs-btn-hover-bg: #c97c80;
+  --bs-btn-hover-border-color: #c97c80;
+  --bs-btn-hover-color: #101010;
+}
+
+.host-room-page .btn-outline-light {
+  --bs-btn-color: var(--host-cream);
+  --bs-btn-border-color: rgba(226, 218, 201, 0.55);
+  --bs-btn-hover-bg: var(--host-cream);
+  --bs-btn-hover-border-color: var(--host-cream);
+  --bs-btn-hover-color: var(--host-ink);
+}
+
+.host-room-page .btn:focus-visible,
+.host-room-home-link:focus-visible {
+  outline: 3px solid var(--host-accent);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+.host-room-state-card {
+  width: min(100%, 760px);
+  margin: clamp(30px, 9vh, 100px) auto;
+  padding: clamp(30px, 5vw, 56px);
+  border: 1px solid var(--host-border);
+  border-radius: 22px;
+  background: var(--host-ink);
+  box-shadow: 0 18px 50px rgba(16, 16, 16, 0.16);
+}
+
+.host-room-state-card > p:not(.host-room-eyebrow) {
+  margin-top: 16px;
+  color: var(--host-muted);
+}
+
+.host-room-error {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--host-accent);
+  color: var(--host-ink) !important;
+}
+
+.host-room-home-link {
+  display: inline-flex;
+  margin-top: 22px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  background: var(--host-cream);
+  color: var(--host-ink);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 150ms ease, background-color 150ms ease;
+}
+
+.host-room-home-link:hover {
+  transform: translateY(-1px);
+  background: #f4f0eb;
+  color: var(--host-ink);
+}
+
+@media (max-width: 1050px) {
+  .host-room-layout {
+    grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.5fr);
+    gap: 16px;
+  }
+
+  .host-room-lower-grid,
+  .host-room-main {
+    gap: 16px;
+  }
+
+  .host-room-card {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 820px) {
+  .host-room-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .host-room-qr {
+    order: 1;
+  }
+
+  .host-room-main {
+    order: 0;
+  }
+
+  .host-room-qr .responsive-qr {
+    width: min(100%, 260px);
+  }
+}
+
+@media (max-width: 640px) {
+  .host-room-page {
+    padding: 18px 14px 26px;
+  }
+
+  .host-room-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 14px;
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+
+  .host-room-code {
+    justify-items: start;
+  }
+
+  .host-room-code code {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .host-room-lower-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .host-room-card {
+    padding: 20px 16px;
+    border-radius: 17px;
+  }
+
+  .host-room-current #currentSong {
+    flex-wrap: wrap;
+  }
+
+  .host-room-current #currentSong > img {
+    width: 88px;
+    height: 88px;
+  }
+
+  .host-room-search form {
+    flex-wrap: wrap;
+  }
+
+  .host-room-search form .form-control {
+    flex-basis: 100%;
+  }
+
+  .host-room-page .btn {
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .host-room-home-link {
+    transition: none;
+  }
+}

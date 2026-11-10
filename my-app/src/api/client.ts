@@ -133,7 +133,7 @@ export function getCurrentSong(roomId: string) {
     `/api/rooms/${encodeURIComponent(roomId)}/songs/current`
   );
 }
-export function getCurrentSongGenre(roomId: string, songId: string) {
+export function getSongGenre(roomId: string, songId: string) {
   return requestJson<SongGenre>(
     `/api/rooms/${encodeURIComponent(roomId)}/songs/${encodeURIComponent(songId)}/genre`
   );

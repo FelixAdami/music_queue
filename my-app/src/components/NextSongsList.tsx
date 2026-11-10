@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { getQueue, type Song } from "../api/client";
 import "../style/NextSongsList.css";
-import SongGenreInfo from "./SongGenreInfo";
 
 type Props = {
   roomId: string;
@@ -49,7 +48,7 @@ function NextSongsList({ roomId }: Props) {
 
       {!error && songs.length === 0 && <p>No songs in the queue yet.</p>}
 
-      {songs.map((song, index) => (
+      {songs.map((song) => (
         <div
           key={song._id}
           className="d-flex align-items-center gap-3 p-2 border-bottom"
@@ -69,9 +68,6 @@ function NextSongsList({ roomId }: Props) {
             <div className="text-secondary">{song.artist}</div>
           </div>
 
-          {index === 0 && (
-            <SongGenreInfo roomId={roomId} songId={song._id} />
-          )}
         </div>
       ))}
     </div>

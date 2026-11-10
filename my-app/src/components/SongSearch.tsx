@@ -1,4 +1,3 @@
-
 import { useState, type FormEvent } from "react";
 import {
   addSpotifySong,
@@ -28,9 +27,7 @@ function SongSearch({ roomId }: Props) {
       const songs = await searchSpotifySongs(query.trim());
       setResults(songs);
     } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Search failed"
-      );
+      setMessage(error instanceof Error ? error.message : "Search failed");
     } finally {
       setSearching(false);
     }
@@ -46,9 +43,7 @@ function SongSearch({ roomId }: Props) {
       await addSpotifySong(roomId, spotifyId);
       setMessage("Song added to queue!");
     } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Could not add song"
-      );
+      setMessage(error instanceof Error ? error.message : "Could not add song");
     } finally {
       setAddingId(null);
     }
@@ -56,7 +51,7 @@ function SongSearch({ roomId }: Props) {
 
   return (
     <section className="mt-4">
-      <h2>Add Songs</h2>
+      <h3>Add Songs</h3>
 
       <form onSubmit={handleSearch} className="d-flex gap-2 mb-3">
         <input

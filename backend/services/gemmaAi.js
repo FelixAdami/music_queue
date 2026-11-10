@@ -2,36 +2,19 @@
 const model = process.env.GEMMA_MODEL || "google/gemma-4-e2b";
 
 const GENRE_CLASSIFICATION_PROMPT = [
-  "You are an expert music genre classification engine.",
+  "You classify music using song lyrics.",
   "",
-  "Analyze the provided song lyrics and identify:",
+  "Identify only:",
+  "1. Likely music genres, based on what the lyrics support.",
+  "2. Main themes expressed in the lyrics.",
   "",
-  "1. Likely musical genre",
-  "2. Possible subgenres",
-  "3. Main lyrical themes",
-  "4. Emotional atmosphere",
-  "5. Language",
-  "6. Confidence level",
-  "",
-  "IMPORTANT:",
-  "- Base your analysis on the lyrical content.",
-  "- Do not invent musical characteristics that cannot",
-  "  be determined from lyrics alone.",
-  "- Distinguish between lyrical themes and musical genre.",
-  "- Multiple genres may be appropriate.",
-  "- If the lyrics do not provide sufficient information,",
-  "  explicitly state that.",
-  "",
-  "Return valid JSON:",
+  "Lyrics may not provide enough evidence to determine a song's sound.",
+  "Do not invent genres or infer subgenres, mood, language, or other details.",
+  "Return only valid JSON with exactly these two properties:",
   "",
   "{",
-  '  "genre": [],',
-  '  "subgenres": [],',
-  '  "themes": [],',
-  '  "mood": [],',
-  '  "language": "",',
-  '  "confidence": 0,',
-  '  "explanation": ""',
+  '  "genres": [],',
+  '  "themes": []',
   "}",
 ].join("\n");
 
@@ -115,18 +98,9 @@ async function analyzeLyricsGenre(lyrics) {
     throw new Error("Gemma returned an invalid genre analysis");
   }
 
-  const confidence = Number(result.confidence);
   return {
-    genre: normalizeStringList(result.genre),
-    subgenres: normalizeStringList(result.subgenres),
+    genres: normalizeStringList(result.genres),
     themes: normalizeStringList(result.themes),
-    mood: normalizeStringList(result.mood),
-    language: typeof result.language === "string" ? result.language.trim() : "",
-    confidence: Number.isFinite(confidence)
-      ? Math.min(1, Math.max(0, confidence))
-      : 0,
-    explanation:
-      typeof result.explanation === "string" ? result.explanation.trim() : "",
   };
 }
 

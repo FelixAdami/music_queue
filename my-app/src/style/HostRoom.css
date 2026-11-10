@@ -144,8 +144,7 @@
   margin-bottom: 16px;
 }
 
-.host-room-card-heading h2,
-.host-room-search h2 {
+.host-room-card-heading h2 {
   margin: 0;
   color: #f4f0eb;
   font-size: clamp(1.25rem, 2vw, 1.65rem);
@@ -177,7 +176,8 @@
   scrollbar-color: #625f5b var(--host-card);
 }
 
-.host-room-queue #nextSongsList > h3 {
+.host-room-queue #nextSongsList > h3,
+.host-room-search h3 {
   margin: 0 0 14px;
   color: #f4f0eb;
   font-size: 1.3rem;

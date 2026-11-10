@@ -29,13 +29,8 @@ export type PlaybackStatus = {
   spotifyId: string | null;
 };
 export type SongGenre = {
-  genre: string[];
-  subgenres: string[];
+  genres: string[];
   themes: string[];
-  mood: string[];
-  language: string;
-  confidence: number;
-  explanation: string;
 };
 
 export class ApiError extends Error {

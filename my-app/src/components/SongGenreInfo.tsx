@@ -11,6 +11,7 @@ function SongGenreInfo({ roomId, songId }: Props) {
   const [analysis, setAnalysis] = useState<SongGenre | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
   const requestInProgress = useRef(false);
   const tooltipId = "song-genre-tooltip-" + songId;
 
@@ -35,36 +36,33 @@ function SongGenreInfo({ roomId, songId }: Props) {
   }
 
   return (
-    <div
-      className="song-genre-info"
-      onMouseEnter={() => void loadGenre()}
-      onFocus={() => void loadGenre()}
-    >
+    <div className={isOpen ? "song-genre-info is-open" : "song-genre-info"}>
       <button
         type="button"
         className="song-genre-trigger"
-        aria-label="Show AI genre analysis"
-        aria-describedby={tooltipId}
+        aria-label={isOpen ? "Hide genre and theme analysis" : "Show genre and theme analysis"}
+        aria-expanded={isOpen}
+        aria-controls={tooltipId}
+        onClick={() => {
+          const opening = !isOpen;
+          setIsOpen(opening);
+          if (opening) void loadGenre();
+        }}
       >
         i
       </button>
-      <div id={tooltipId} className="song-genre-tooltip" role="tooltip">
-        <strong>Lyrics based AI analysis</strong>
+      <div id={tooltipId} className="song-genre-tooltip" role="region" aria-label="Genre and theme analysis">
+        <strong>Lyrics based genre and theme analysis</strong>
         {loading && <p>Analyzing lyrics...</p>}
         {error && <p>{error}</p>}
         {analysis && (
           <div className="song-genre-details">
-            <p><b>Genre:</b> {analysis.genre.join(", ") || "Unknown"}</p>
-            <p><b>Subgenres:</b> {analysis.subgenres.join(", ") || "Unknown"}</p>
+            <p><b>Genres:</b> {analysis.genres.join(", ") || "Unknown"}</p>
             <p><b>Themes:</b> {analysis.themes.join(", ") || "Unknown"}</p>
-            <p><b>Mood:</b> {analysis.mood.join(", ") || "Unknown"}</p>
-            <p><b>Language:</b> {analysis.language || "Unknown"}</p>
-            <p><b>Confidence:</b> {Math.round(analysis.confidence * 100)}%</p>
-            {analysis.explanation && <p>{analysis.explanation}</p>}
           </div>
         )}
         {!loading && !error && !analysis && (
-          <p>Hover or focus here to analyze this song's lyrics.</p>
+          <p>Click to analyze this song's lyrics.</p>
         )}
       </div>
     </div>

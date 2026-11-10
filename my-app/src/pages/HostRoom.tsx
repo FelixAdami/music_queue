@@ -92,11 +92,18 @@ function HostRoom() {
     return (
       <main className="host-room-page">
         <div className="host-room-shell">
-          <section className="host-room-state-card" aria-labelledby="host-room-error-title">
+          <section
+            className="host-room-state-card"
+            aria-labelledby="host-room-error-title"
+          >
             <p className="host-room-eyebrow">Room control</p>
             <h1 id="host-room-error-title">Unable to open host dashboard</h1>
-            <p className="host-room-error" role="alert">{hostCheck.message}</p>
-            <Link className="host-room-home-link" to="/">Return to the home page</Link>
+            <p className="host-room-error" role="alert">
+              {hostCheck.message}
+            </p>
+            <Link className="host-room-home-link" to="/">
+              Return to the home page
+            </Link>
           </section>
         </div>
       </main>
@@ -118,12 +125,18 @@ function HostRoom() {
         </header>
 
         <div className="host-room-layout">
-          <section className="host-room-card host-room-qr" aria-label="Guest join information">
+          <section
+            className="host-room-card host-room-qr"
+            aria-label="Guest join information"
+          >
             <HostQrCode roomId={currentRoomId} />
           </section>
 
           <div className="host-room-main">
-            <section className="host-room-card host-room-current" aria-labelledby="host-current-heading">
+            <section
+              className="host-room-card host-room-current"
+              aria-labelledby="host-current-heading"
+            >
               <div className="host-room-card-heading">
                 <p className="host-room-eyebrow">Playback</p>
                 <h2 id="host-current-heading">Currently playing</h2>
@@ -132,10 +145,16 @@ function HostRoom() {
             </section>
 
             <div className="host-room-lower-grid">
-              <section className="host-room-card host-room-queue" aria-label="Upcoming songs">
+              <section
+                className="host-room-card host-room-queue"
+                aria-label="Upcoming songs"
+              >
                 <NextSongsList roomId={currentRoomId} />
               </section>
-              <section className="host-room-card host-room-search" aria-label="Add songs">
+              <section
+                className="host-room-card host-room-search"
+                aria-label="Add songs"
+              >
                 <SongSearch roomId={currentRoomId} />
               </section>
             </div>

@@ -5,11 +5,11 @@
 }
 
 #currentSong h2 {
-  color: white;
+  color: var(--app-cream);
   margin-bottom: 4px;
 }
 
 #currentSong h3 {
-  color: #999;
+  color: var(--app-muted);
   margin-bottom: 0;
 }

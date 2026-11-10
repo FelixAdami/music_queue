@@ -1,26 +1,8 @@
-@font-face {
-  font-family: "CalteoDemo";
-  src: url("../assets/font/CalteoDemoRegular-8OvrZ.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
 .create-room-page {
-  --create-room-ink: #101010;
-  --create-room-cream: #e2dac9;
-  --create-room-muted: #aaa8a8;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  width: 100%;
-  min-height: 100svh;
-  box-sizing: border-box;
-  padding: clamp(20px, 4vw, 48px) 20px 28px;
-  color: var(--create-room-cream);
-  text-align: left;
-  background: linear-gradient(112deg, #244467 0%, #52677d 48%, #e2dac9 100%);
+  padding-bottom: 28px;
 }
 
 .create-room-content {
@@ -30,31 +12,20 @@
 
 .create-room-card {
   width: min(100%, 780px);
+  box-sizing: border-box;
   margin: 0 auto;
   padding: clamp(32px, 5vw, 56px);
-  box-sizing: border-box;
   border-radius: 24px;
-  background: var(--create-room-ink);
   text-align: center;
-  color: var(--create-room-cream);
 }
 
 .create-room-eyebrow {
-  margin: 0 0 14px;
-  color: var(--create-room-muted);
+  margin-bottom: 14px;
   text-align: left;
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 .create-room-card h1 {
-  margin: 0;
-  color: #f4f0eb;
-  font-family: "CalteoDemo", var(--heading, var(--sans, system-ui, sans-serif));
   font-size: clamp(2.2rem, 5.2vw, 4.25rem);
-  font-weight: 400;
   line-height: 1.04;
   letter-spacing: -0.04em;
 }
@@ -69,8 +40,8 @@
   margin: 24px 0 0;
   padding: 12px 16px;
   border-radius: 12px;
-  background: #c97c80;
-  color: #171113;
+  background: var(--app-accent);
+  color: var(--app-ink);
   font-size: 0.95rem;
 }
 
@@ -99,7 +70,7 @@
 }
 
 .create-room-form input:focus-visible {
-  outline: 3px solid var(--create-room-cream);
+  outline: 3px solid var(--app-cream);
   outline-offset: 2px;
 }
 
@@ -110,15 +81,13 @@
   padding: 14px 30px;
   border: 0;
   border-radius: 999px;
-  background: var(--create-room-cream);
-  color: #101010;
+  background: var(--app-cream);
+  color: var(--app-ink);
   font: inherit;
-  text-align: center;
   font-weight: 700;
+  text-align: center;
   cursor: pointer;
-  transition:
-    background-color 150ms ease,
-    transform 150ms ease;
+  transition: background-color 150ms ease, transform 150ms ease;
 }
 
 .create-room-button:hover:not(:disabled) {
@@ -147,7 +116,6 @@
   }
 
   .create-room-button {
-    justify-self: center;
     min-width: 220px;
     max-width: 100%;
   }

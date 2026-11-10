@@ -1,56 +1,23 @@
-@font-face {
-  font-family: "CalteoDemo";
-  src: url("../assets/font/CalteoDemoRegular-8OvrZ.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
 .not-found-page {
-  --not-found-ink: #101010;
-  --not-found-cream: #e2dac9;
-  --not-found-muted: #aaa8a8;
-  --not-found-accent: #c97c80;
-  --not-found-border: rgba(226, 218, 201, 0.18);
-
   display: grid;
-  flex: 1;
-  width: 100%;
-  min-height: 100svh;
-  box-sizing: border-box;
   place-items: center;
   padding: clamp(20px, 4vw, 48px);
-  background: linear-gradient(125deg, #244467 0%, #52677d 46%, #e2dac9 115%);
-  color: var(--not-found-cream);
-  text-align: left;
 }
 
 .not-found-card {
   width: min(100%, 780px);
   box-sizing: border-box;
   padding: clamp(30px, 6vw, 64px);
-  border: 1px solid var(--not-found-border);
   border-radius: 24px;
-  background: var(--not-found-ink);
-  box-shadow: 0 18px 50px rgba(16, 16, 16, 0.16);
 }
 
 .not-found-eyebrow {
-  margin: 0 0 14px;
-  color: var(--not-found-muted);
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  margin-bottom: 14px;
 }
 
 .not-found-card h1 {
   max-width: 640px;
-  margin: 0;
-  color: #f4f0eb;
-  font-family: "CalteoDemo", var(--heading, var(--sans, system-ui, sans-serif));
   font-size: clamp(2.5rem, 6vw, 4.75rem);
-  font-weight: 400;
   line-height: 1.02;
   letter-spacing: -0.045em;
 }
@@ -58,35 +25,12 @@
 .not-found-message {
   max-width: 500px;
   margin-top: 18px;
-  color: var(--not-found-muted);
+  color: var(--app-muted);
   font-size: clamp(1rem, 2vw, 1.12rem);
 }
 
 .not-found-home-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
   margin-top: 28px;
-  padding: 12px 18px;
-  border-radius: 999px;
-  background: var(--not-found-cream);
-  color: var(--not-found-ink);
-  font-weight: 700;
-  text-decoration: none;
-  transition:
-    background-color 150ms ease,
-    transform 150ms ease;
-}
-
-.not-found-home-link:hover {
-  transform: translateY(-1px);
-  background: #f4f0eb;
-  color: var(--not-found-ink);
-}
-
-.not-found-home-link:focus-visible {
-  outline: 3px solid var(--not-found-accent);
-  outline-offset: 3px;
 }
 
 @media (max-width: 640px) {
@@ -97,11 +41,5 @@
   .not-found-card {
     padding: 30px 24px;
     border-radius: 19px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .not-found-home-link {
-    transition: none;
   }
 }

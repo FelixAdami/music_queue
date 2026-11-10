@@ -1,5 +1,4 @@
 import { QRCodeSVG } from "qrcode.react";
-import "../style/HostQrCode.css";
 
 type HostQrCodeProps = {
   roomId: string;
@@ -13,7 +12,7 @@ function HostQrCode({ roomId }: HostQrCodeProps) {
 
   return (
     <>
-      <h1 className="my-3">Join this session</h1>
+      <h1 className="app-display-title">Join this session</h1>
       {roomId.trim() ? (
         <>
           <p className="mb-3">Scan this QR code to open the session.</p>

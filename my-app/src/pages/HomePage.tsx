@@ -3,33 +3,33 @@ import "../style/HomePage.css";
 
 function HomePage() {
   return (
-    <main className="home-page">
+    <main className="app-page home-page">
       <div className="home-content">
-        <section className="home-hero" aria-labelledby="home-title">
-          <p className="home-eyebrow">shared music queue</p>
-          <h1 id="home-title">
+        <section className="app-surface home-hero" aria-labelledby="home-title">
+          <p className="app-eyebrow home-eyebrow">shared music queue</p>
+          <h1 id="home-title" className="app-display-title">
             Make your next gathering a little more musical.
           </h1>
           <p className="home-intro">
             Start a room, share the code, and let everyone help shape what plays
             next.
           </p>
-          <Link className="home-host-link" to="/host">
+          <Link className="app-pill-link home-host-link" to="/host">
             Host a room <span aria-hidden="true">&gt;</span>
           </Link>
         </section>
 
         <section className="home-options" aria-label="Ways to join or host">
-          <article className="home-option">
-            <p className="home-option-label">For hosts</p>
+          <article className="app-surface home-option">
+            <p className="app-eyebrow home-option-label">For hosts</p>
             <h2>Bring the room together</h2>
             <p>
               Connect Spotify to create a room and show guests its join QR code.
             </p>
           </article>
 
-          <article className="home-option home-guest-option">
-            <p className="home-option-label">For guests</p>
+          <article className="app-surface home-option home-guest-option">
+            <p className="app-eyebrow home-option-label">For guests</p>
             <h2>Join the queue</h2>
             <p>Scan the host QR code</p>
 

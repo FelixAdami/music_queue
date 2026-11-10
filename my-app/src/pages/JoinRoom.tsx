@@ -83,11 +83,14 @@ function JoinRoom() {
 
   if (loading) {
     return (
-      <main className="join-room-page">
+      <main className="app-page join-room-page">
         <div className="join-room-shell">
-          <section className="join-room-state-card" role="status">
-            <p className="join-room-eyebrow">Guest access</p>
-            <h1>Joining the room</h1>
+          <section
+            className="app-surface app-surface--bordered join-room-state-card"
+            role="status"
+          >
+            <p className="app-eyebrow join-room-eyebrow">Guest access</p>
+            <h1 className="app-display-title">Joining the room</h1>
             <p>Connecting you to the music queue...</p>
           </section>
         </div>
@@ -97,12 +100,19 @@ function JoinRoom() {
 
   if (error) {
     return (
-      <main className="join-room-page">
+      <main className="app-page join-room-page">
         <div className="join-room-shell">
-          <section className="join-room-state-card" aria-labelledby="join-room-error-title">
-            <p className="join-room-eyebrow">Guest access</p>
-            <h1 id="join-room-error-title">Could not join this room</h1>
-            <p className="join-room-error" role="alert">{error}</p>
+          <section
+            className="app-surface app-surface--bordered join-room-state-card"
+            aria-labelledby="join-room-error-title"
+          >
+            <p className="app-eyebrow join-room-eyebrow">Guest access</p>
+            <h1 id="join-room-error-title" className="app-display-title">
+              Could not join this room
+            </h1>
+            <p className="join-room-error" role="alert">
+              {error}
+            </p>
           </section>
         </div>
       </main>
@@ -110,12 +120,14 @@ function JoinRoom() {
   }
 
   return (
-    <main className="join-room-page">
+    <main className="app-page join-room-page">
       <div className="join-room-shell">
-        <header className="join-room-header">
+        <header className="app-surface app-surface--bordered join-room-header">
           <div>
-            <p className="join-room-eyebrow">Guest access</p>
-            <h1 id="join-room-title">Join the queue</h1>
+            <p className="app-eyebrow join-room-eyebrow">Guest access</p>
+            <h1 id="join-room-title" className="app-display-title">
+              Join the queue
+            </h1>
             <p>Search Spotify and add a song for everyone to hear.</p>
           </div>
           <div className="join-room-code">
@@ -124,9 +136,12 @@ function JoinRoom() {
           </div>
         </header>
 
-        <section className="join-room-card" aria-labelledby="join-room-search-title">
+        <section
+          className="app-surface app-surface--bordered join-room-card"
+          aria-labelledby="join-room-search-title"
+        >
           <div className="join-room-card-heading">
-            <p className="join-room-eyebrow">Find your next track</p>
+            <p className="app-eyebrow join-room-eyebrow">Find your next track</p>
             <h2 id="join-room-search-title">Search songs</h2>
           </div>
 
@@ -149,7 +164,11 @@ function JoinRoom() {
             </button>
           </form>
 
-          {message && <p className="join-room-message" role="status">{message}</p>}
+          {message && (
+            <p className="join-room-message" role="status">
+              {message}
+            </p>
+          )}
 
           {results.length > 0 && (
             <div className="join-room-results" aria-label="Search results">

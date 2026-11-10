@@ -76,11 +76,14 @@ function HostRoom() {
 
   if (hostCheck.roomId !== currentRoomId || hostCheck.status === "loading") {
     return (
-      <main className="host-room-page">
+      <main className="app-page host-room-page">
         <div className="host-room-shell">
-          <section className="host-room-state-card" role="status">
-            <p className="host-room-eyebrow">Room control</p>
-            <h1>Checking host access</h1>
+          <section
+            className="app-surface app-surface--bordered host-room-state-card"
+            role="status"
+          >
+            <p className="app-eyebrow host-room-eyebrow">Room control</p>
+            <h1 className="app-display-title">Checking host access</h1>
             <p>Connecting to your room...</p>
           </section>
         </div>
@@ -90,18 +93,20 @@ function HostRoom() {
 
   if (hostCheck.status === "error") {
     return (
-      <main className="host-room-page">
+      <main className="app-page host-room-page">
         <div className="host-room-shell">
           <section
-            className="host-room-state-card"
+            className="app-surface app-surface--bordered host-room-state-card"
             aria-labelledby="host-room-error-title"
           >
-            <p className="host-room-eyebrow">Room control</p>
-            <h1 id="host-room-error-title">Unable to open host dashboard</h1>
+            <p className="app-eyebrow host-room-eyebrow">Room control</p>
+            <h1 id="host-room-error-title" className="app-display-title">
+              Unable to open host dashboard
+            </h1>
             <p className="host-room-error" role="alert">
               {hostCheck.message}
             </p>
-            <Link className="host-room-home-link" to="/">
+            <Link className="app-pill-link host-room-home-link" to="/">
               Return to the home page
             </Link>
           </section>
@@ -111,13 +116,13 @@ function HostRoom() {
   }
 
   return (
-    <main className="host-room-page">
+    <main className="app-page host-room-page">
       <div className="host-room-shell">
         {/* ev. Überschrift löschen - überflüssig? */}
-        <header className="host-room-header">
+        <header className="app-surface app-surface--bordered host-room-header">
           <div>
-            <p className="host-room-eyebrow">Room control</p>
-            <h1>Host dashboard</h1>
+            <p className="app-eyebrow host-room-eyebrow">Room control</p>
+            <h1 className="app-display-title">Host dashboard</h1>
           </div>
           <div className="host-room-code">
             <span>Room code</span>
@@ -127,7 +132,7 @@ function HostRoom() {
 
         <div className="host-room-layout">
           <section
-            className="host-room-card host-room-qr"
+            className="app-surface app-surface--bordered host-room-card host-room-qr"
             aria-label="Guest join information"
           >
             <HostQrCode roomId={currentRoomId} />
@@ -135,11 +140,11 @@ function HostRoom() {
 
           <div className="host-room-main">
             <section
-              className="host-room-card host-room-current"
+              className="app-surface app-surface--bordered host-room-card host-room-current"
               aria-labelledby="host-current-heading"
             >
               <div className="host-room-card-heading">
-                <p className="host-room-eyebrow">Playback</p>
+                <p className="app-eyebrow host-room-eyebrow">Playback</p>
                 <h2 id="host-current-heading">Currently playing</h2>
               </div>
               <CurrentSong roomId={currentRoomId} />
@@ -147,13 +152,13 @@ function HostRoom() {
 
             <div className="host-room-lower-grid">
               <section
-                className="host-room-card host-room-queue"
+                className="app-surface app-surface--bordered host-room-card host-room-queue"
                 aria-label="Upcoming songs"
               >
                 <NextSongsList roomId={currentRoomId} />
               </section>
               <section
-                className="host-room-card host-room-search"
+                className="app-surface app-surface--bordered host-room-card host-room-search"
                 aria-label="Add songs"
               >
                 <SongSearch roomId={currentRoomId} />

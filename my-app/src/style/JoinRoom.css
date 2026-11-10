@@ -1,41 +1,6 @@
-@font-face {
-  font-family: "CalteoDemo";
-  src: url("../assets/font/CalteoDemoRegular-8OvrZ.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
-.join-room-page {
-  --join-ink: #101010;
-  --join-card: #171717;
-  --join-cream: #e2dac9;
-  --join-muted: #aaa8a8;
-  --join-accent: #c97c80;
-  --join-border: rgba(226, 218, 201, 0.18);
-
-  flex: 1;
-  width: 100%;
-  min-height: 100svh;
-  box-sizing: border-box;
-  padding: clamp(22px, 4vw, 48px) 20px 36px;
-  color: var(--join-cream);
-  background: linear-gradient(125deg, #244467 0%, #52677d 46%, #e2dac9 115%);
-  text-align: left;
-}
-
 .join-room-shell {
   width: min(100%, 980px);
   margin: 0 auto;
-}
-
-.join-room-header,
-.join-room-card,
-.join-room-state-card {
-  border: 1px solid var(--join-border);
-  border-radius: 22px;
-  background: var(--join-ink);
-  box-shadow: 0 18px 50px rgba(16, 16, 16, 0.16);
 }
 
 .join-room-header {
@@ -45,24 +10,12 @@
   gap: 24px;
   margin-bottom: 22px;
   padding: clamp(24px, 4vw, 40px);
-}
-
-.join-room-eyebrow {
-  margin: 0 0 10px;
-  color: var(--join-muted);
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  border-radius: 22px;
 }
 
 .join-room-header h1,
 .join-room-state-card h1 {
-  margin: 0;
-  color: #f4f0eb;
-  font-family: "CalteoDemo", var(--heading, var(--sans, system-ui, sans-serif));
   font-size: clamp(2.3rem, 5vw, 4rem);
-  font-weight: 400;
   line-height: 1.04;
   letter-spacing: -0.04em;
 }
@@ -70,7 +23,7 @@
 .join-room-header > div:first-child > p:last-child,
 .join-room-state-card > p:not(.join-room-eyebrow) {
   margin: 14px 0 0;
-  color: var(--join-muted);
+  color: var(--app-muted);
 }
 
 .join-room-code {
@@ -78,7 +31,7 @@
   justify-items: end;
   gap: 5px;
   min-width: 0;
-  color: var(--join-muted);
+  color: var(--app-muted);
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -87,7 +40,7 @@
 
 .join-room-code code {
   max-width: min(40vw, 380px);
-  color: var(--join-cream);
+  color: var(--app-cream);
   font-family: var(--mono);
   font-size: 0.9rem;
   letter-spacing: 0;
@@ -98,6 +51,7 @@
 
 .join-room-card {
   padding: clamp(22px, 4vw, 36px);
+  border-radius: 22px;
 }
 
 .join-room-card-heading {
@@ -121,62 +75,15 @@
 }
 
 .join-room-search-form .form-control {
-  min-width: 0;
   min-height: 50px;
-  border-color: #625f5b;
-  background: var(--join-card);
-  color: #f4f0eb;
-}
-
-.join-room-search-form .form-control::placeholder {
-  color: var(--join-muted);
-}
-
-.join-room-search-form .form-control:focus {
-  border-color: var(--join-cream);
-  box-shadow: 0 0 0 0.2rem rgba(226, 218, 201, 0.2);
-}
-
-.join-room-page .btn {
-  --bs-btn-padding-x: 1rem;
-  --bs-btn-padding-y: 0.62rem;
-  --bs-btn-border-width: 1px;
-  flex: 0 0 auto;
-  min-height: 46px;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  font-weight: 650;
-}
-
-.join-room-page .btn-primary {
-  --bs-btn-bg: #52677d;
-  --bs-btn-border-color: #52677d;
-  --bs-btn-hover-bg: #c97c80;
-  --bs-btn-hover-border-color: #c97c80;
-  --bs-btn-hover-color: #101010;
-}
-
-.join-room-page .btn-success {
-  --bs-btn-bg: var(--join-cream);
-  --bs-btn-border-color: var(--join-cream);
-  --bs-btn-color: var(--join-ink);
-  --bs-btn-hover-bg: #f4f0eb;
-  --bs-btn-hover-border-color: #f4f0eb;
-  --bs-btn-hover-color: var(--join-ink);
-}
-
-.join-room-page .btn:focus-visible {
-  outline: 3px solid var(--join-accent);
-  outline-offset: 3px;
-  box-shadow: none;
 }
 
 .join-room-message {
   margin-top: 16px;
   padding: 11px 14px;
-  border: 1px solid var(--join-border);
+  border: 1px solid var(--app-border);
   border-radius: 10px;
-  color: var(--join-cream);
+  color: var(--app-cream);
   overflow-wrap: anywhere;
 }
 
@@ -191,7 +98,7 @@
   gap: 14px;
   min-width: 0;
   padding: 14px 2px;
-  border-bottom: 1px solid var(--join-border);
+  border-bottom: 1px solid var(--app-border);
 }
 
 .join-room-result img {
@@ -220,27 +127,31 @@
   color: #f4f0eb;
 }
 
+.join-room-song-details span,
+.join-room-empty {
+  color: var(--app-muted);
+}
+
 .join-room-song-details span {
-  color: var(--join-muted);
   font-size: 0.9rem;
 }
 
 .join-room-empty {
   margin-top: 18px;
-  color: var(--join-muted);
 }
 
 .join-room-error {
   padding: 12px 16px;
   border-radius: 12px;
-  background: var(--join-accent);
-  color: var(--join-ink) !important;
+  background: var(--app-accent);
+  color: var(--app-ink) !important;
 }
 
 .join-room-state-card {
   width: min(100%, 760px);
   margin: clamp(30px, 9vh, 100px) auto;
   padding: clamp(30px, 5vw, 56px);
+  border-radius: 22px;
 }
 
 @media (max-width: 640px) {
@@ -286,11 +197,5 @@
 
   .join-room-result .btn {
     margin-left: auto;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .join-room-page .btn {
-    transition: none;
   }
 }

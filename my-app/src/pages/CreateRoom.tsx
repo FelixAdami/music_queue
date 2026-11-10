@@ -85,14 +85,16 @@ function CreateRoom() {
 
   if (checkingSpotify) {
     return (
-      <main className="create-room-page">
+      <main className="app-page create-room-page">
         <div className="create-room-content">
           <section
-          className="create-room-card"
-          aria-labelledby="create-room-title"
+            className="app-surface create-room-card"
+            aria-labelledby="create-room-title"
           >
-            <p className="create-room-eyebrow">Spotify setup</p>
-            <h1 id="create-room-title">Create a music room</h1>
+            <p className="app-eyebrow create-room-eyebrow">Spotify setup</p>
+            <h1 id="create-room-title" className="app-display-title">
+              Create a music room
+            </h1>
             <p className="create-room-status" role="status">
               Checking your Spotify connection...
             </p>
@@ -103,14 +105,16 @@ function CreateRoom() {
   }
 
   return (
-    <main className="create-room-page">
+    <main className="app-page create-room-page">
       <div className="create-room-content">
         <section
-          className="create-room-card"
+          className="app-surface create-room-card"
           aria-labelledby="create-room-title"
         >
-          <p className="create-room-eyebrow">Spotify setup</p>
-          <h1 id="create-room-title">Create a music room</h1>
+          <p className="app-eyebrow create-room-eyebrow">Spotify setup</p>
+          <h1 id="create-room-title" className="app-display-title">
+            Create a music room
+          </h1>
 
           {error && (
             <p className="create-room-error" role="alert">

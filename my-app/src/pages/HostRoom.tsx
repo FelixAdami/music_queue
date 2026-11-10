@@ -113,6 +113,7 @@ function HostRoom() {
   return (
     <main className="host-room-page">
       <div className="host-room-shell">
+        {/* ev. Überschrift löschen - überflüssig? */}
         <header className="host-room-header">
           <div>
             <p className="host-room-eyebrow">Room control</p>

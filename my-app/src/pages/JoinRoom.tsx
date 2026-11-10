@@ -7,6 +7,7 @@ import {
   addSpotifySong,
   type SpotifySearchResult,
 } from "../api/client";
+import "../style/JoinRoom.css";
 
 function JoinRoom() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -80,69 +81,114 @@ function JoinRoom() {
     }
   }
 
-  if (loading) return <p>Joining room...</p>;
-  if (error) return <p role="alert">{error}</p>;
+  if (loading) {
+    return (
+      <main className="join-room-page">
+        <div className="join-room-shell">
+          <section className="join-room-state-card" role="status">
+            <p className="join-room-eyebrow">Guest access</p>
+            <h1>Joining the room</h1>
+            <p>Connecting you to the music queue...</p>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="join-room-page">
+        <div className="join-room-shell">
+          <section className="join-room-state-card" aria-labelledby="join-room-error-title">
+            <p className="join-room-eyebrow">Guest access</p>
+            <h1 id="join-room-error-title">Could not join this room</h1>
+            <p className="join-room-error" role="alert">{error}</p>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className="container py-4">
-      <h1>Join Music Queue</h1>
-      <p>Room: {roomId}</p>
+    <main className="join-room-page">
+      <div className="join-room-shell">
+        <header className="join-room-header">
+          <div>
+            <p className="join-room-eyebrow">Guest access</p>
+            <h1 id="join-room-title">Join the queue</h1>
+            <p>Search Spotify and add a song for everyone to hear.</p>
+          </div>
+          <div className="join-room-code">
+            <span>Room code</span>
+            <code>{roomId}</code>
+          </div>
+        </header>
 
-      <form onSubmit={handleSearch} className="d-flex gap-2 mb-4">
-        <input
-          className="form-control"
-          type="search"
-          placeholder="Search Spotify songs..."
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-
-        <button
-          className="btn btn-primary"
-          type="submit"
-          disabled={searching || !query.trim()}
-        >
-          {searching ? "Searching..." : "Search"}
-        </button>
-      </form>
-
-      {message && <p role="status">{message}</p>}
-
-      {results.map((song) => (
-        <div
-          key={song.spotifyId}
-          className="d-flex align-items-center gap-3 p-3 border-bottom"
-        >
-          {song.imageUrl && (
-            <img
-              src={song.imageUrl}
-              alt=""
-              width={60}
-              height={60}
-              style={{ objectFit: "cover" }}
-            />
-          )}
-
-          <div className="flex-grow-1">
-            <strong>{song.title}</strong>
-            <div className="text-secondary">{song.artist}</div>
+        <section className="join-room-card" aria-labelledby="join-room-search-title">
+          <div className="join-room-card-heading">
+            <p className="join-room-eyebrow">Find your next track</p>
+            <h2 id="join-room-search-title">Search songs</h2>
           </div>
 
-          <button
-            className="btn btn-success"
-            disabled={addingId !== null}
-            onClick={() => void handleAddSong(song.spotifyId)}
-          >
-            {addingId === song.spotifyId ? "Adding..." : "Add to Queue"}
-          </button>
-        </div>
-      ))}
+          <form onSubmit={handleSearch} className="join-room-search-form">
+            <input
+              className="form-control"
+              type="search"
+              placeholder="Search Spotify songs..."
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              aria-label="Search Spotify songs"
+            />
 
-      {!searching && results.length === 0 && (
-        <p className="text-secondary mt-3">
-          Search for a song to add it to the party queue.
-        </p>
-      )}
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={searching || !query.trim()}
+            >
+              {searching ? "Searching..." : "Search"}
+            </button>
+          </form>
+
+          {message && <p className="join-room-message" role="status">{message}</p>}
+
+          {results.length > 0 && (
+            <div className="join-room-results" aria-label="Search results">
+              {results.map((song) => (
+                <article key={song.spotifyId} className="join-room-result">
+                  {song.imageUrl && (
+                    <img
+                      src={song.imageUrl}
+                      alt=""
+                      width={60}
+                      height={60}
+                    />
+                  )}
+
+                  <div className="join-room-song-details">
+                    <strong>{song.title}</strong>
+                    <span>{song.artist}</span>
+                  </div>
+
+                  <button
+                    className="btn btn-success"
+                    type="button"
+                    disabled={addingId !== null}
+                    onClick={() => void handleAddSong(song.spotifyId)}
+                  >
+                    {addingId === song.spotifyId ? "Adding..." : "Add to Queue"}
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {!searching && results.length === 0 && (
+            <p className="join-room-empty">
+              Search for a song to add it to the party queue.
+            </p>
+          )}
+        </section>
+      </div>
     </main>
   );
 }

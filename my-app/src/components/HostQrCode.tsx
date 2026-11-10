@@ -8,7 +8,7 @@ type HostQrCodeProps = {
 function HostQrCode({ roomId }: HostQrCodeProps) {
   const joinUrl = new URL(
     `/join/${encodeURIComponent(roomId.trim())}`,
-    window.location.origin,
+    import.meta.env.VITE_PUBLIC_URL || window.location.origin,
   );
 
   return (

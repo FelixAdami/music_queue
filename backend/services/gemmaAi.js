@@ -19,10 +19,6 @@ const GENRE_CLASSIFICATION_PROMPT = [
 ].join("\n");
 
 async function askGemma(input) {
-  if (typeof input !== "string" || !input.trim()) {
-    throw new TypeError("Gemma input must be a non-empty string");
-  }
-
   const headers = { "Content-Type": "application/json" };
   if (process.env.LM_STUDIO_API_TOKEN) {
     headers.Authorization = "Bearer " + process.env.LM_STUDIO_API_TOKEN;
@@ -104,4 +100,4 @@ async function analyzeLyricsGenre(lyrics) {
   };
 }
 
-module.exports = { askGemma, analyzeLyricsGenre };
+module.exports = { analyzeLyricsGenre };

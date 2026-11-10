@@ -1,5 +1,10 @@
+
 const Song = require("../models/Song");
 const { getValidAccessToken } = require("../utils/spotifyAuth");
+const {
+  findSpotifyDevice,
+  transferSpotifyPlayback,
+} = require("./spotifyDevices");
 
 // Rooms currently switching songs
 const switchingRooms = new Set();
@@ -28,9 +33,23 @@ async function playNextSong(room) {
     // Get the host's Spotify access token
     const accessToken = await getValidAccessToken(room.hostSpotifyId);
 
-    // Start the next song on Spotify
+    // Find an available Spotify Connect device
+    const device = await findSpotifyDevice(room.hostSpotifyId);
+
+    if (!device) {
+      throw new Error(
+        "No Spotify device available. Open Spotify on your PC or phone and try again."
+      );
+    }
+
+    // Activate the device only if it is not already active
+    if (!device.is_active) {
+      await transferSpotifyPlayback(room.hostSpotifyId, device.id);
+    }
+
+    // Start the next song on the selected device
     const spotifyResponse = await fetch(
-      "https://api.spotify.com/v1/me/player/play",
+      `https://api.spotify.com/v1/me/player/play?device_id=${encodeURIComponent(device.id)}`,
       {
         method: "PUT",
         headers: {
@@ -40,7 +59,7 @@ async function playNextSong(room) {
         body: JSON.stringify({
           uris: [`spotify:track:${nextSong.spotifyId}`],
         }),
-      },
+      }
     );
 
     if (!spotifyResponse.ok) {
@@ -49,20 +68,26 @@ async function playNextSong(room) {
       console.error(
         "Spotify playback failed:",
         spotifyResponse.status,
-        details,
+        details
       );
 
-      throw new Error("Could not start Spotify playback");
+      throw new Error(
+        `Could not start Spotify playback (${spotifyResponse.status})`
+      );
     }
 
-    // Mark the song as played
+    // Mark the song as played only after successful playback request
     nextSong.playedAt = new Date();
     await nextSong.save();
 
-    // Update the room's current song
     room.currentSongId = nextSong._id;
     room.lastSpotifyTrackId = nextSong.spotifyId;
     room.isPaused = false;
+
+    // Reset saved position for the newly selected song
+    room.playbackPositionMs = 0;
+    room.playbackPositionUpdatedAt = new Date();
+
     await room.save();
 
     return nextSong;
@@ -73,3 +98,4 @@ async function playNextSong(room) {
 }
 
 module.exports = { playNextSong };
+

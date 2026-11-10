@@ -1,3 +1,4 @@
+
 const { getSpotifyPlaybackStatus } = require("./spotifyPlayback");
 const { playNextSong } = require("./queuePlayback");
 const Room = require("../models/Room");
@@ -40,16 +41,17 @@ async function checkRoomPlayback(room) {
       Number.isFinite(previous.progressMs)
     ) {
       const remainingMs = previous.durationMs - previous.progressMs;
-
       const elapsedMs = now - previous.checkedAt;
 
       const nearEnd = remainingMs >= 0 && remainingMs <= 10000;
 
       const expectedEndTime =
-        elapsedMs >= remainingMs - 2000 && elapsedMs <= remainingMs + 10000;
+        elapsedMs >= remainingMs - 2000 &&
+        elapsedMs <= remainingMs + 10000;
 
       const trackChanged =
-        playback.isPlaying && playback.spotifyId !== previous.spotifyId;
+        playback.isPlaying &&
+        playback.spotifyId !== previous.spotifyId;
 
       const spotifyStopped = !playback.isPlaying;
 
@@ -62,6 +64,31 @@ async function checkRoomPlayback(room) {
       if (nearEnd && expectedEndTime && spotifyStopped) {
         console.log(`Room ${roomId}: Spotify stopped near song end`);
       }
+    }
+
+    // Store the position only for the current queue song
+    if (
+      playback.isPlaying &&
+      playback.spotifyId === room.lastSpotifyTrackId &&
+      Number.isFinite(playback.progressMs)
+    ) {
+      await Room.updateOne(
+        {
+          _id: room._id,
+          currentSongId: room.currentSongId,
+          lastSpotifyTrackId: room.lastSpotifyTrackId,
+          isPaused: false,
+        },
+        {
+          $set: {
+            playbackPositionMs: Math.max(
+              0,
+              Math.floor(playback.progressMs)
+            ),
+            playbackPositionUpdatedAt: new Date(now),
+          },
+        }
+      );
     }
 
     // Save latest playback state
@@ -84,7 +111,9 @@ async function checkRoomPlayback(room) {
 
     if (
       !latestRoom ||
-      latestRoom.currentSongId?.toString() !== room.currentSongId?.toString() ||
+      latestRoom.isPaused ||
+      latestRoom.currentSongId?.toString() !==
+        room.currentSongId?.toString() ||
       latestRoom.lastSpotifyTrackId !== room.lastSpotifyTrackId
     ) {
       return;
@@ -96,15 +125,19 @@ async function checkRoomPlayback(room) {
     const nextSong = await playNextSong(latestRoom);
 
     if (nextSong) {
-      console.log(`Room ${roomId}: Automatically started ${nextSong.title}`);
+      console.log(
+        `Room ${roomId}: Automatically started ${nextSong.title}`
+      );
     } else {
       console.log(`Room ${roomId}: Queue is empty`);
     }
 
-    // Reset monitoring after automatic switch
     playbackStates.delete(roomId);
   } catch (error) {
-    console.error(`Playback monitoring failed for room ${roomId}:`, error);
+    console.error(
+      `Playback monitoring failed for room ${roomId}:`,
+      error
+    );
   } finally {
     switchingRooms.delete(roomId);
   }

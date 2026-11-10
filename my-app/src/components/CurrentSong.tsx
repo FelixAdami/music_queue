@@ -119,20 +119,14 @@ function CurrentSong({ roomId }: Props) {
 
     try {
       if (status.isPlaying) {
+        // Pause the current song
         await pausePlayback(roomId);
-        setStatus((previous) =>
-          previous
-            ? { ...previous, isPlaying: false, isPaused: true }
-            : previous
-        );
-      } else if (status.isCurrentTrack) {
+      } else if (song) {
+        // Resume the current queue song, even if Spotify
+        // lost its playback state after inactivity
         await resumePlayback(roomId);
-        setStatus((previous) =>
-          previous
-            ? { ...previous, isPlaying: true, isPaused: false }
-            : previous
-        );
       } else {
+        // Only start the next queue song if none is selected
         const result = await nextSong(roomId);
         setSong(result.currentSong);
       }
@@ -221,3 +215,4 @@ function CurrentSong({ roomId }: Props) {
 }
 
 export default CurrentSong;
+

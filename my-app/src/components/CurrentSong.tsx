@@ -110,35 +110,42 @@ function CurrentSong({ roomId }: Props) {
     }
   }
 
-  async function handlePlaybackToggle() {
-    if (loading || playbackLoading || !status) return;
 
-    actionInProgress.current = true;
-    setPlaybackLoading(true);
-    setError("");
+async function handlePlaybackToggle() {
+  if (loading || playbackLoading || !status) return;
 
-    try {
-      if (status.isPlaying) {
-        // Pause the current song
-        await pausePlayback(roomId);
-      } else if (song) {
-        // Resume the current queue song, even if Spotify
-        // lost its playback state after inactivity
-        await resumePlayback(roomId);
-      } else {
-        // Only start the next queue song if none is selected
-        const result = await nextSong(roomId);
-        setSong(result.currentSong);
-      }
+  actionInProgress.current = true;
+  setPlaybackLoading(true);
+  setError("");
 
+  try {
+    if (status.isPlaying) {
+      await pausePlayback(roomId);
+      setStatus((previous) =>
+        previous
+          ? { ...previous, isPlaying: false, isPaused: true }
+          : previous
+      );
+    } else if (song) {
+      await resumePlayback(roomId);
+      setStatus((previous) =>
+        previous
+          ? { ...previous, isPlaying: true, isPaused: false }
+          : previous
+      );
+    } else {
+      const result = await nextSong(roomId);
+      setSong(result.currentSong);
       await refreshAfterAction();
-    } catch (err) {
-      showError(err);
-    } finally {
-      actionInProgress.current = false;
-      setPlaybackLoading(false);
     }
+  } catch (err) {
+    showError(err);
+  } finally {
+    actionInProgress.current = false;
+    setPlaybackLoading(false);
   }
+}
+
 
   const isPlaying = status?.isPlaying ?? false;
 

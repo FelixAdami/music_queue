@@ -1,6 +1,11 @@
+
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { ApiError, getRoomHostStatus } from "../api/client";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  ApiError,
+  endRoomSession,
+  getRoomHostStatus,
+} from "../api/client";
 import CurrentSong from "../components/CurrentSong";
 import HostQrCode from "../components/HostQrCode";
 import NextSongsList from "../components/NextSongsList";
@@ -31,11 +36,15 @@ function getHostCheckError(error: unknown): string {
 
 function HostRoom() {
   const { roomId } = useParams<{ roomId: string }>();
+  const navigate = useNavigate();
   const currentRoomId = roomId ?? "";
+
   const [hostCheck, setHostCheck] = useState<HostCheck>({
     roomId: currentRoomId,
     status: "loading",
   });
+  const [endingSession, setEndingSession] = useState(false);
+  const [endSessionError, setEndSessionError] = useState("");
 
   useEffect(() => {
     let isCurrentRequest = true;
@@ -73,6 +82,32 @@ function HostRoom() {
       isCurrentRequest = false;
     };
   }, [roomId, currentRoomId]);
+
+  async function handleEndSession() {
+    if (!currentRoomId || endingSession) return;
+
+    const confirmed = window.confirm(
+      "End this session? The room and all queued songs will be deleted."
+    );
+
+    if (!confirmed) return;
+
+    setEndingSession(true);
+    setEndSessionError("");
+
+    try {
+      await endRoomSession(currentRoomId);
+      navigate("/");
+    } catch (error) {
+      setEndSessionError(
+        error instanceof Error
+          ? error.message
+          : "Could not end session."
+      );
+    } finally {
+      setEndingSession(false);
+    }
+  }
 
   if (hostCheck.roomId !== currentRoomId || hostCheck.status === "loading") {
     return (
@@ -118,15 +153,28 @@ function HostRoom() {
   return (
     <main className="app-page host-room-page">
       <div className="host-room-shell">
-        {/* ev. Überschrift löschen - überflüssig? */}
         <header className="app-surface app-surface--bordered host-room-header">
           <div>
             <p className="app-eyebrow host-room-eyebrow">Room control</p>
             <h1 className="app-display-title">Host dashboard</h1>
           </div>
+
           <div className="host-room-code">
             <span>Room code</span>
             <code>{currentRoomId}</code>
+            <button
+              type="button"
+              className="btn btn-outline-danger mt-2"
+              onClick={handleEndSession}
+              disabled={endingSession}
+            >
+              {endingSession ? "Ending..." : "End Session"}
+            </button>
+            {endSessionError && (
+              <p className="host-room-error" role="alert">
+                {endSessionError}
+              </p>
+            )}
           </div>
         </header>
 

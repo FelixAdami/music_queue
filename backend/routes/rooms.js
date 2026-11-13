@@ -2,6 +2,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const Room = require("../models/Room");
+const Song = require("../models/Song");
 const {
   getSpotifyPlaybackStatus,
 } = require("../services/spotifyPlayback");
@@ -210,6 +211,38 @@ router.get(
 
       return res.status(502).json({
         error: "Could not retrieve Spotify playback status",
+      });
+    }
+  }
+);
+
+// 6. End session (host only)
+router.delete(
+  "/:id",
+  requireSpotifyAuth,
+  requireRoomHost,
+  async (req, res) => {
+    try {
+      const roomId = req.room._id;
+
+      // Remove the room first so it is no longer monitored
+      // and no new songs can be added to it.
+      await Room.deleteOne({
+        _id: roomId,
+        hostSpotifyId: req.session.spotifyUserId,
+      });
+
+      // Remove all songs belonging to this room.
+      await Song.deleteMany({ roomId });
+
+      return res.status(200).json({
+        message: "Session ended successfully",
+      });
+    } catch (error) {
+      console.error("End session error:", error);
+
+      return res.status(500).json({
+        error: "Failed to end session",
       });
     }
   }

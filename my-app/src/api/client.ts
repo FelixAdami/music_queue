@@ -28,6 +28,7 @@ export type PlaybackStatus = {
   hasActiveDevice: boolean;
   spotifyId: string | null;
 };
+
 export type SongGenre = {
   genres: string[];
   themes: string[];
@@ -100,6 +101,14 @@ export function getRoomHostStatus(roomId: string) {
   );
 }
 
+// End a room and remove its songs.
+export function endRoomSession(roomId: string) {
+  return requestJson<{ message: string }>(
+    `/api/rooms/${encodeURIComponent(roomId)}`,
+    { method: "DELETE" }
+  );
+}
+
 export function startSpotifyLogin() {
   window.location.assign(`${API_BASE_URL}/api/spotify/login`);
 }
@@ -128,6 +137,7 @@ export function getCurrentSong(roomId: string) {
     `/api/rooms/${encodeURIComponent(roomId)}/songs/current`
   );
 }
+
 export function getSongGenre(roomId: string, songId: string) {
   return requestJson<SongGenre>(
     `/api/rooms/${encodeURIComponent(roomId)}/songs/${encodeURIComponent(songId)}/genre`
@@ -185,5 +195,3 @@ export function searchSpotifySongs(query: string) {
     `/api/spotify/search?q=${encodeURIComponent(query)}`
   );
 }
-
-

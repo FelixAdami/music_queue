@@ -68,6 +68,20 @@ router.post("/:id/songs", async (req, res) => {
       });
     }
 
+    // Check for duplicate songs in the queue
+    const existingSong = await Song.findOne({
+      roomId: id,
+      spotifyId: spotifyId.trim(),
+      playedAt: null,
+    });
+
+    if (existingSong) {
+      return res.status(409).json({
+        error: "This song is already in the queue",
+        code: "DUPLICATE_SONG",
+      });
+    }
+
     const song = await Song.create({
       roomId: id,
       spotifyId: spotifyId.trim(),
@@ -206,6 +220,20 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
       });
     }
 
+    // Check for duplicate songs in the queue
+    const existingSong = await Song.findOne({
+      roomId: id,
+      spotifyId: spotifyId,
+      playedAt: null,
+    });
+
+    if (existingSong) {
+      return res.status(409).json({
+        error: "This song is already in the queue",
+        code: "DUPLICATE_SONG",
+      });
+    }
+
     // add checks for duplicates
 
     // Request Spotify app access token
@@ -331,12 +359,8 @@ router.post("/:id/songs/next", async (req, res) => {
       message: "Next song selected",
       currentSong: nextSong,
     });
-    } catch (error) {
-    return sendApiError(
-      res,
-      error,
-      "Failed to select next song"
-    );
+  } catch (error) {
+    return sendApiError(res, error, "Failed to select next song");
   }
 });
 
@@ -382,7 +406,6 @@ router.get("/:id/songs/current", async (req, res) => {
   }
 });
 
-
 router.get("/:id/songs/:songId/genre", async (req, res) => {
   try {
     const { id, songId } = req.params;
@@ -397,7 +420,8 @@ router.get("/:id/songs/:songId/genre", async (req, res) => {
       _id: songId,
       roomId: room._id,
     });
-    if (!song) return res.status(404).json({ error: "Song not found in this room" });
+    if (!song)
+      return res.status(404).json({ error: "Song not found in this room" });
 
     const genre = await getSongGenre(song);
     if (!genre) {
@@ -438,19 +462,14 @@ router.put("/:id/playback/pause", async (req, res) => {
       });
     }
 
-    const accessToken = await getValidAccessToken(
-      req.session.spotifyUserId
-    );
+    const accessToken = await getValidAccessToken(req.session.spotifyUserId);
 
     // Get the current playback position before pausing
-    const statusResponse = await fetch(
-      "https://api.spotify.com/v1/me/player",
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    const statusResponse = await fetch("https://api.spotify.com/v1/me/player", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
     let positionMs = null;
 
@@ -467,26 +486,23 @@ router.put("/:id/playback/pause", async (req, res) => {
     } else if (statusResponse.status !== 204) {
       console.warn(
         "Could not retrieve playback position:",
-        statusResponse.status
+        statusResponse.status,
       );
     }
 
     // Pause Spotify playback
-    const response = await fetch(
-      "https://api.spotify.com/v1/me/player/pause",
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    const response = await fetch("https://api.spotify.com/v1/me/player/pause", {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
     if (!response.ok) {
       console.error(
         "Spotify pause failed:",
         response.status,
-        await response.text()
+        await response.text(),
       );
 
       return res.status(502).json({
@@ -509,15 +525,9 @@ router.put("/:id/playback/pause", async (req, res) => {
       positionMs: room.playbackPositionMs,
     });
   } catch (error) {
-    return sendApiError(
-      res,
-      error,
-      "Failed to pause playback"
-    );
+    return sendApiError(res, error, "Failed to pause playback");
   }
 });
-
-
 
 router.put("/:id/playback/resume", async (req, res) => {
   try {
@@ -551,12 +561,12 @@ router.put("/:id/playback/resume", async (req, res) => {
       });
     }
 
-    const accessToken = await getValidAccessToken(
-      req.session.spotifyUserId
-    );
+    const accessToken = await getValidAccessToken(req.session.spotifyUserId);
 
-    const { findSpotifyDevice, transferSpotifyPlayback } =
-      require("../services/spotifyDevices");
+    const {
+      findSpotifyDevice,
+      transferSpotifyPlayback,
+    } = require("../services/spotifyDevices");
 
     const device = await findSpotifyDevice(room.hostSpotifyId);
 
@@ -568,14 +578,11 @@ router.put("/:id/playback/resume", async (req, res) => {
     }
 
     // Check what Spotify is currently playing
-    const statusResponse = await fetch(
-      "https://api.spotify.com/v1/me/player",
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    const statusResponse = await fetch("https://api.spotify.com/v1/me/player", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
     let playback = null;
 
@@ -587,14 +594,10 @@ router.put("/:id/playback/resume", async (req, res) => {
       });
     }
 
-    const isCurrentTrack =
-      playback?.item?.id === room.lastSpotifyTrackId;
+    const isCurrentTrack = playback?.item?.id === room.lastSpotifyTrackId;
 
     if (!device.is_active) {
-      await transferSpotifyPlayback(
-        room.hostSpotifyId,
-        device.id
-      );
+      await transferSpotifyPlayback(room.hostSpotifyId, device.id);
     }
 
     const playUrl =
@@ -610,10 +613,7 @@ router.put("/:id/playback/resume", async (req, res) => {
       // Restore our queue song instead of starting the next one
       body = JSON.stringify({
         uris: [`spotify:track:${room.lastSpotifyTrackId}`],
-        position_ms: Math.max(
-          0,
-          Math.floor(room.playbackPositionMs ?? 0)
-        ),
+        position_ms: Math.max(0, Math.floor(room.playbackPositionMs ?? 0)),
       });
     }
 
@@ -630,7 +630,7 @@ router.put("/:id/playback/resume", async (req, res) => {
       console.error(
         "Spotify resume failed:",
         response.status,
-        await response.text()
+        await response.text(),
       );
 
       return res.status(502).json({
@@ -646,13 +646,8 @@ router.put("/:id/playback/resume", async (req, res) => {
       restored: !isCurrentTrack,
     });
   } catch (error) {
-    return sendApiError(
-      res,
-      error,
-      "Failed to resume playback"
-    );
+    return sendApiError(res, error, "Failed to resume playback");
   }
 });
-
 
 module.exports = router;

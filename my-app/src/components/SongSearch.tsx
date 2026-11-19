@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import {
   addSpotifySong,
+  ApiError,
   searchSpotifySongs,
   type SpotifySearchResult,
 } from "../api/client";
@@ -43,7 +44,14 @@ function SongSearch({ roomId }: Props) {
       await addSpotifySong(roomId, spotifyId);
       setMessage("Song added to queue!");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not add song");
+      if (error instanceof ApiError && error.status === 409) {
+        // Song is already in queue - is treated as succesful action
+        setMessage("Song added to queue!");
+      } else {
+        setMessage(
+          error instanceof Error ? error.message : "Could not add song",
+        );
+      }
     } finally {
       setAddingId(null);
     }

@@ -92,14 +92,14 @@ router.post("/:id/songs", async (req, res) => {
       spotifyUrl,
     });
 
-    // updating song with genre
+    // Updating song with genre
     const genreAnalysis = await getSongGenre(song);
     if (!genreAnalysis || !Array.isArray(genreAnalysis.genres)) {
       return res.status(404).json({
         error: "Could not determine song genres and themes",
       });
     }
-    // adding genre to Song object
+    // Adding genre to Song object
     song.allowedGenres = genreAnalysis.genres;
     await song.save();
 
@@ -132,9 +132,15 @@ router.get("/:id/songs", async (req, res) => {
       });
     }
 
+    const genreFilter =
+      room.allowedGenres.length > 0
+        ? { allowedGenres: { $in: room.allowedGenres } }
+        : {};
+
     const songs = await Song.find({
       roomId: id,
       playedAt: null,
+      ...genreFilter,
     }).sort({ addedAt: 1, _id: 1 });
 
     return res.status(200).json(songs);
@@ -318,14 +324,14 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
       spotifyUrl: track.external_urls?.spotify || null,
     });
 
-    // updating song with genre
+    // Updating song with genre
     const genreAnalysis = await getSongGenre(song);
     if (!genreAnalysis || !Array.isArray(genreAnalysis.genres)) {
       return res.status(404).json({
         error: "Could not determine song genres and themes",
       });
     }
-    // adding genre to Song object
+    // Adding genre to Song object
     song.allowedGenres = genreAnalysis.genres;
     await song.save();
 

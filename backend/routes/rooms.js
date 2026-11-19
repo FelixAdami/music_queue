@@ -183,6 +183,7 @@ router.get("/:id/host", requireSpotifyAuth, requireRoomHost, (req, res) => {
     isHost: true,
     roomId: req.room._id,
     roomName: req.room.name,
+    allowedGenres: req.room.allowedGenres ?? [],
   });
 });
 

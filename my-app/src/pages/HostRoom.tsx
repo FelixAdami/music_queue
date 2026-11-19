@@ -9,7 +9,12 @@ import "../style/HostRoom.css";
 
 type HostCheck =
   | { roomId: string; status: "loading" }
-  | { roomId: string; status: "authorized"; roomName: string }
+  | {
+      roomId: string;
+      status: "authorized";
+      roomName: string;
+      allowedGenres: string[];
+    }
   | { roomId: string; status: "error"; message: string };
 
 function getHostCheckError(error: unknown): string {
@@ -58,9 +63,14 @@ function HostRoom() {
     setHostCheck({ roomId, status: "loading" });
 
     getRoomHostStatus(roomId)
-      .then(({ roomName }) => {
+      .then(({ roomName, allowedGenres }) => {
         if (isCurrentRequest) {
-          setHostCheck({ roomId, status: "authorized", roomName });
+          setHostCheck({
+            roomId,
+            status: "authorized",
+            roomName,
+            allowedGenres: allowedGenres ?? [],
+          });
         }
       })
       .catch((error: unknown) => {
@@ -150,6 +160,23 @@ function HostRoom() {
           <div>
             <p className="app-eyebrow host-room-eyebrow">Room control</p>
             <h1 className="app-display-title">{hostCheck.roomName}</h1>
+
+            <div className="genre-options d-flex flex-wrap gap-2">
+              {hostCheck.allowedGenres.length > 0 ? (
+                hostCheck.allowedGenres.map((genre) => (
+                  <span key={genre} className="genre-option selected">
+                    {genre
+                      .split(" ")
+                      .map(
+                        (word) => word.charAt(0).toUpperCase() + word.slice(1),
+                      )
+                      .join(" ")}
+                  </span>
+                ))
+              ) : (
+                <p className="genre-description">All genres allowed</p>
+              )}
+            </div>
           </div>
 
           <div className="host-room-code">

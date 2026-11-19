@@ -21,6 +21,7 @@ export type RoomHostStatus = {
   isHost: true;
   roomId: string;
   roomName: string;
+  allowedGenres: string[];
 };
 
 export type PlaybackStatus = {

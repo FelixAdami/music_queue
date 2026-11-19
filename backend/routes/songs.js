@@ -92,6 +92,17 @@ router.post("/:id/songs", async (req, res) => {
       spotifyUrl,
     });
 
+    // updating song with genre
+    const genreAnalysis = await getSongGenre(song);
+    if (!genreAnalysis || !Array.isArray(genreAnalysis.genres)) {
+      return res.status(404).json({
+        error: "Could not determine song genres and themes",
+      });
+    }
+    // adding genre to Song object
+    song.allowedGenres = genreAnalysis.genres;
+    await song.save();
+
     return res.status(201).json(song);
   } catch (error) {
     console.error("Error adding song:", error);
@@ -234,8 +245,6 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
       });
     }
 
-    // add checks for duplicates
-
     // Request Spotify app access token
     const tokenResponse = await fetch(
       "https://accounts.spotify.com/api/token",
@@ -299,8 +308,6 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
       });
     }
 
-    // add genre checkmaybe here
-
     const song = await Song.create({
       roomId: id,
       spotifyId: track.id,
@@ -310,6 +317,17 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
       imageUrl: track.album?.images?.[0]?.url || null,
       spotifyUrl: track.external_urls?.spotify || null,
     });
+
+    // updating song with genre
+    const genreAnalysis = await getSongGenre(song);
+    if (!genreAnalysis || !Array.isArray(genreAnalysis.genres)) {
+      return res.status(404).json({
+        error: "Could not determine song genres and themes",
+      });
+    }
+    // adding genre to Song object
+    song.allowedGenres = genreAnalysis.genres;
+    await song.save();
 
     return res.status(201).json(song);
   } catch (error) {

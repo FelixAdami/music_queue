@@ -1,5 +1,6 @@
 const dns = require("node:dns");
 dns.setServers(["8.8.8.8"]);
+const path = require("node:path");
 
 require("dotenv").config();
 
@@ -99,6 +100,16 @@ app.use("/api/spotify", spotifyRoutes);
 
 // Spotify search
 app.use("/api/spotify", spotifySearchRoutes);
+
+// Serve React frontend
+const frontendPath = path.join(__dirname, "../my-app/dist");
+
+app.use(express.static(frontendPath));
+
+// React Router fallback
+app.get("/{*splat}", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
 
 // 8. Playback monitoring
 let playbackCheckRunning = false;

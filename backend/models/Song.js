@@ -44,6 +44,20 @@ const songSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+
+  // Genre Rules
+  allowedGenres: {
+    type: [{ type: String }],
+    default: [],
+    set: (genres) => [
+      ...new Set(
+        genres
+          .filter((genre) => typeof genre === "string")
+          .map((genre) => genre.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    ],
+  },
 });
 
 module.exports = mongoose.model("Song", songSchema);

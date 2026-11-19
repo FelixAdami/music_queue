@@ -1,4 +1,3 @@
-
 const Song = require("../models/Song");
 const { getValidAccessToken } = require("../utils/spotifyAuth");
 const {
@@ -20,10 +19,15 @@ async function playNextSong(room) {
   switchingRooms.add(roomId);
 
   try {
-    // Find the oldest unplayed song
+    // Aply room genre restriction
+    const allowedGenres = room.allowedGenres ?? [];
+    const genreFilter =
+      allowedGenres.length > 0 ? { allowedGenres: { $in: allowedGenres } } : {};
+    // Find the oldest unplayed song matching genre restrictions
     const nextSong = await Song.findOne({
       roomId: room._id,
       playedAt: null,
+      ...genreFilter,
     }).sort({ addedAt: 1, _id: 1 });
 
     if (!nextSong) {
@@ -38,7 +42,7 @@ async function playNextSong(room) {
 
     if (!device) {
       throw new Error(
-        "No Spotify device available. Open Spotify on your PC or phone and try again."
+        "No Spotify device available. Open Spotify on your PC or phone and try again.",
       );
     }
 
@@ -59,7 +63,7 @@ async function playNextSong(room) {
         body: JSON.stringify({
           uris: [`spotify:track:${nextSong.spotifyId}`],
         }),
-      }
+      },
     );
 
     if (!spotifyResponse.ok) {
@@ -68,11 +72,11 @@ async function playNextSong(room) {
       console.error(
         "Spotify playback failed:",
         spotifyResponse.status,
-        details
+        details,
       );
 
       throw new Error(
-        `Could not start Spotify playback (${spotifyResponse.status})`
+        `Could not start Spotify playback (${spotifyResponse.status})`,
       );
     }
 
@@ -98,4 +102,3 @@ async function playNextSong(room) {
 }
 
 module.exports = { playNextSong };
-

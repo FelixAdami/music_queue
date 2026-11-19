@@ -1,4 +1,6 @@
-﻿const baseUrl = (process.env.LM_STUDIO_BASE_URL || "http://localhost:1234").replace(/\/+$/, "");
+﻿const baseUrl = (
+  process.env.LM_STUDIO_BASE_URL || "http://localhost:1234"
+).replace(/\/+$/, "");
 const model = process.env.GEMMA_MODEL || "google/gemma-4-e2b";
 
 const GENRE_CLASSIFICATION_PROMPT = [
@@ -11,6 +13,9 @@ const GENRE_CLASSIFICATION_PROMPT = [
   "Lyrics may not provide enough evidence to determine a song's sound.",
   "Do not invent genres or infer subgenres, mood, language, or other details.",
   "Return only valid JSON with exactly these two properties:",
+  "",
+  "Choose for number 1 (genres) one or several of the following:",
+  "Pop, Rock, Metal, Hip-Hop & Rap, R&B, Soul & Funk, Electronic & Dance, Jazz, Blues, Classical, Country, Folk & Acoustic, Latin, Reggae & Caribbean, Punk, Alternative, Indie, Ambient",
   "",
   "{",
   '  "genres": [],',
@@ -54,7 +59,9 @@ async function askGemma(input) {
 
   const answer = Array.isArray(result.output)
     ? result.output
-        .filter((item) => item.type === "message" && typeof item.content === "string")
+        .filter(
+          (item) => item.type === "message" && typeof item.content === "string",
+        )
         .map((item) => item.content)
         .join("\n")
         .trim()

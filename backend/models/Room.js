@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const roomSchema = new mongoose.Schema({
@@ -45,6 +44,20 @@ const roomSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+
+  // Genre Rules
+  allowedGenres: {
+    type: [{ type: String }],
+    default: [],
+    set: (genres) => [
+      ...new Set(
+        genres
+          .filter((genre) => typeof genre === "string")
+          .map((genre) => genre.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    ],
   },
 });
 

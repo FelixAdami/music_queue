@@ -9,6 +9,27 @@ import {
 } from "../api/client";
 import "../style/CreateRoom.css";
 
+const AVAILABLE_GENRES = [
+  "Pop",
+  "Rock",
+  "Metal",
+  "Hip-Hop & Rap",
+  "R&B",
+  "Soul & Funk",
+  "Electronic & Dance",
+  "Jazz",
+  "Blues",
+  "Classical",
+  "Country",
+  "Folk & Acoustic",
+  "Latin",
+  "Reggae & Caribbean",
+  "Punk",
+  "Alternative",
+  "Indie",
+  "Ambient",
+];
+
 function CreateRoom() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -17,6 +38,16 @@ function CreateRoom() {
   const [roomName, setRoomName] = useState("");
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [error, setError] = useState("");
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+
+  // Funtion for toggle selection of genres
+  function toggleGenre(genre: string) {
+    setSelectedGenres((currentGenres) =>
+      currentGenres.includes(genre)
+        ? currentGenres.filter((g) => g !== genre)
+        : [...currentGenres, genre],
+    );
+  }
 
   useEffect(() => {
     let isCurrentRequest = true;
@@ -70,7 +101,7 @@ function CreateRoom() {
 
     setCreatingRoom(true);
     try {
-      const room = await createRoom(trimmedName);
+      const room = await createRoom(trimmedName, selectedGenres);
       navigate(`/room/${encodeURIComponent(room._id)}`);
     } catch (requestError) {
       setError(
@@ -136,7 +167,7 @@ function CreateRoom() {
           ) : (
             <>
               <p className="create-room-status">
-                Connected to Spotify as{' '}
+                Connected to Spotify as{" "}
                 {spotifyUser.displayName || spotifyUser.id}.
               </p>
               <form className="create-room-form" onSubmit={handleCreateRoom}>
@@ -149,6 +180,36 @@ function CreateRoom() {
                   maxLength={100}
                   required
                 />
+                <fieldset className="genre-selection mb-4">
+                  <legend className="genre-legend mb-2">
+                    Choose optional music genres
+                  </legend>
+
+                  <p className="genre-description mb-3">
+                    Select the genres allowed in your music room.
+                  </p>
+
+                  <div className="genre-options d-flex flex-wrap gap-2">
+                    {AVAILABLE_GENRES.map((genre) => (
+                      <label
+                        key={genre}
+                        className={`genre-option ${
+                          selectedGenres.includes(genre) ? "selected" : ""
+                        }`}
+                      >
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          value={genre}
+                          checked={selectedGenres.includes(genre)}
+                          onChange={() => toggleGenre(genre)}
+                        />
+
+                        <span>{genre}</span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
                 <button
                   className="create-room-button"
                   type="submit"

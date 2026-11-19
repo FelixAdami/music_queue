@@ -1,11 +1,6 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import {
-  ApiError,
-  endRoomSession,
-  getRoomHostStatus,
-} from "../api/client";
+import { ApiError, endRoomSession, getRoomHostStatus } from "../api/client";
 import CurrentSong from "../components/CurrentSong";
 import HostQrCode from "../components/HostQrCode";
 import NextSongsList from "../components/NextSongsList";
@@ -14,7 +9,7 @@ import "../style/HostRoom.css";
 
 type HostCheck =
   | { roomId: string; status: "loading" }
-  | { roomId: string; status: "authorized" }
+  | { roomId: string; status: "authorized"; roomName: string }
   | { roomId: string; status: "error"; message: string };
 
 function getHostCheckError(error: unknown): string {
@@ -63,9 +58,9 @@ function HostRoom() {
     setHostCheck({ roomId, status: "loading" });
 
     getRoomHostStatus(roomId)
-      .then(() => {
+      .then(({ roomName }) => {
         if (isCurrentRequest) {
-          setHostCheck({ roomId, status: "authorized" });
+          setHostCheck({ roomId, status: "authorized", roomName });
         }
       })
       .catch((error: unknown) => {
@@ -87,7 +82,7 @@ function HostRoom() {
     if (!currentRoomId || endingSession) return;
 
     const confirmed = window.confirm(
-      "End this session? The room and all queued songs will be deleted."
+      "End this session? The room and all queued songs will be deleted.",
     );
 
     if (!confirmed) return;
@@ -97,12 +92,10 @@ function HostRoom() {
 
     try {
       await endRoomSession(currentRoomId);
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (error) {
       setEndSessionError(
-        error instanceof Error
-          ? error.message
-          : "Could not end session."
+        error instanceof Error ? error.message : "Could not end session.",
       );
     } finally {
       setEndingSession(false);
@@ -156,7 +149,7 @@ function HostRoom() {
         <header className="app-surface app-surface--bordered host-room-header">
           <div>
             <p className="app-eyebrow host-room-eyebrow">Room control</p>
-            <h1 className="app-display-title">Host dashboard</h1>
+            <h1 className="app-display-title">{hostCheck.roomName}</h1>
           </div>
 
           <div className="host-room-code">

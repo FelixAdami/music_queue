@@ -1,11 +1,8 @@
-
 const express = require("express");
 const mongoose = require("mongoose");
 const Room = require("../models/Room");
 const Song = require("../models/Song");
-const {
-  getSpotifyPlaybackStatus,
-} = require("../services/spotifyPlayback");
+const { getSpotifyPlaybackStatus } = require("../services/spotifyPlayback");
 
 const router = express.Router();
 
@@ -56,10 +53,12 @@ async function requireRoomHost(req, res, next) {
   }
 }
 
+// add also genre with room (add in db schema)
+
 // 1. Create a new room
 router.post("/", requireSpotifyAuth, async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, allowedGenres = [] } = req.body;
 
     if (typeof name !== "string" || !name.trim()) {
       return res.status(400).json({
@@ -67,9 +66,26 @@ router.post("/", requireSpotifyAuth, async (req, res) => {
       });
     }
 
+    // Validate genre selection
+    if (
+      !Array.isArray(allowedGenres) ||
+      !allowedGenres.every(
+        (genre) => typeof genre === "string" && genre.trim().length > 0,
+      )
+    ) {
+      return res.status(400).json({
+        error: "Invalid genre selection",
+      });
+    }
+
+    const normalizedGenres = [
+      ...new Set(allowedGenres.map((genre) => genre.trim().toLowerCase())),
+    ];
+
     const room = await Room.create({
       name: name.trim(),
       hostSpotifyId: req.session.spotifyUserId,
+      allowedGenres: normalizedGenres,
     });
 
     return res.status(201).json(room);
@@ -162,18 +178,13 @@ router.post("/:id/join", async (req, res) => {
 });
 
 // 4. Check whether user is room host
-router.get(
-  "/:id/host",
-  requireSpotifyAuth,
-  requireRoomHost,
-  (req, res) => {
-    return res.status(200).json({
-      isHost: true,
-      roomId: req.room._id,
-      roomName: req.room.name,
-    });
-  }
-);
+router.get("/:id/host", requireSpotifyAuth, requireRoomHost, (req, res) => {
+  return res.status(200).json({
+    isHost: true,
+    roomId: req.room._id,
+    roomName: req.room.name,
+  });
+});
 
 // 5. Get actual Spotify playback status
 router.get(
@@ -184,25 +195,19 @@ router.get(
     try {
       const room = req.room;
 
-      const playback = await getSpotifyPlaybackStatus(
-        room.hostSpotifyId
-      );
+      const playback = await getSpotifyPlaybackStatus(room.hostSpotifyId);
 
       const isCurrentTrack = Boolean(
         room.currentSongId &&
         room.lastSpotifyTrackId &&
-        playback?.spotifyId === room.lastSpotifyTrackId
+        playback?.spotifyId === room.lastSpotifyTrackId,
       );
 
       return res.status(200).json({
         hasCurrentSong: Boolean(room.currentSongId),
         isCurrentTrack,
-        isPlaying: Boolean(
-          isCurrentTrack && playback?.isPlaying
-        ),
-        isPaused: Boolean(
-          isCurrentTrack && !playback?.isPlaying
-        ),
+        isPlaying: Boolean(isCurrentTrack && playback?.isPlaying),
+        isPaused: Boolean(isCurrentTrack && !playback?.isPlaying),
         hasActiveDevice: playback !== null,
         spotifyId: playback?.spotifyId ?? null,
       });
@@ -213,39 +218,34 @@ router.get(
         error: "Could not retrieve Spotify playback status",
       });
     }
-  }
+  },
 );
 
 // 6. End session (host only)
-router.delete(
-  "/:id",
-  requireSpotifyAuth,
-  requireRoomHost,
-  async (req, res) => {
-    try {
-      const roomId = req.room._id;
+router.delete("/:id", requireSpotifyAuth, requireRoomHost, async (req, res) => {
+  try {
+    const roomId = req.room._id;
 
-      // Remove the room first so it is no longer monitored
-      // and no new songs can be added to it.
-      await Room.deleteOne({
-        _id: roomId,
-        hostSpotifyId: req.session.spotifyUserId,
-      });
+    // Remove the room first so it is no longer monitored
+    // and no new songs can be added to it.
+    await Room.deleteOne({
+      _id: roomId,
+      hostSpotifyId: req.session.spotifyUserId,
+    });
 
-      // Remove all songs belonging to this room.
-      await Song.deleteMany({ roomId });
+    // Remove all songs belonging to this room.
+    await Song.deleteMany({ roomId });
 
-      return res.status(200).json({
-        message: "Session ended successfully",
-      });
-    } catch (error) {
-      console.error("End session error:", error);
+    return res.status(200).json({
+      message: "Session ended successfully",
+    });
+  } catch (error) {
+    console.error("End session error:", error);
 
-      return res.status(500).json({
-        error: "Failed to end session",
-      });
-    }
+    return res.status(500).json({
+      error: "Failed to end session",
+    });
   }
-);
+});
 
 module.exports = router;

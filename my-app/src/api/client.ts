@@ -1,11 +1,14 @@
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(
+  /\/$/,
+  "",
+);
 
 export type Room = {
   _id: string;
   name: string;
   hostSpotifyId: string;
   createdAt: string;
+  allowedGenres: string[];
 };
 
 export type SpotifyUser = {
@@ -75,29 +78,27 @@ export function getCurrentSpotifyUser() {
   return requestJson<SpotifyUser>("/api/spotify/me");
 }
 
-export function createRoom(name: string) {
+export function createRoom(name: string, allowedGenres: string[]) {
   return requestJson<Room>("/api/rooms", {
     method: "POST",
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, allowedGenres }),
   });
 }
 
 export function getRoom(roomId: string) {
-  return requestJson<Room>(
-    `/api/rooms/${encodeURIComponent(roomId)}`
-  );
+  return requestJson<Room>(`/api/rooms/${encodeURIComponent(roomId)}`);
 }
 
 export function joinRoom(roomId: string) {
   return requestJson<{ roomId: string; roomName: string }>(
     `/api/rooms/${encodeURIComponent(roomId)}/join`,
-    { method: "POST" }
+    { method: "POST" },
   );
 }
 
 export function getRoomHostStatus(roomId: string) {
   return requestJson<RoomHostStatus>(
-    `/api/rooms/${encodeURIComponent(roomId)}/host`
+    `/api/rooms/${encodeURIComponent(roomId)}/host`,
   );
 }
 
@@ -105,7 +106,7 @@ export function getRoomHostStatus(roomId: string) {
 export function endRoomSession(roomId: string) {
   return requestJson<{ message: string }>(
     `/api/rooms/${encodeURIComponent(roomId)}`,
-    { method: "DELETE" }
+    { method: "DELETE" },
   );
 }
 
@@ -127,20 +128,18 @@ export type Song = {
 };
 
 export function getQueue(roomId: string) {
-  return requestJson<Song[]>(
-    `/api/rooms/${encodeURIComponent(roomId)}/songs`
-  );
+  return requestJson<Song[]>(`/api/rooms/${encodeURIComponent(roomId)}/songs`);
 }
 
 export function getCurrentSong(roomId: string) {
   return requestJson<{ currentSong: Song | null }>(
-    `/api/rooms/${encodeURIComponent(roomId)}/songs/current`
+    `/api/rooms/${encodeURIComponent(roomId)}/songs/current`,
   );
 }
 
 export function getSongGenre(roomId: string, songId: string) {
   return requestJson<SongGenre>(
-    `/api/rooms/${encodeURIComponent(roomId)}/songs/${encodeURIComponent(songId)}/genre`
+    `/api/rooms/${encodeURIComponent(roomId)}/songs/${encodeURIComponent(songId)}/genre`,
   );
 }
 
@@ -150,34 +149,34 @@ export function addSpotifySong(roomId: string, spotifyId: string) {
     {
       method: "POST",
       body: JSON.stringify({ spotifyId }),
-    }
+    },
   );
 }
 
 export function nextSong(roomId: string) {
   return requestJson<{ message: string; currentSong: Song | null }>(
     `/api/rooms/${encodeURIComponent(roomId)}/songs/next`,
-    { method: "POST" }
+    { method: "POST" },
   );
 }
 
 export function pausePlayback(roomId: string) {
   return requestJson<{ message: string }>(
     `/api/rooms/${encodeURIComponent(roomId)}/playback/pause`,
-    { method: "PUT" }
+    { method: "PUT" },
   );
 }
 
 export function resumePlayback(roomId: string) {
   return requestJson<{ message: string }>(
     `/api/rooms/${encodeURIComponent(roomId)}/playback/resume`,
-    { method: "PUT" }
+    { method: "PUT" },
   );
 }
 
 export function getPlaybackStatus(roomId: string) {
   return requestJson<PlaybackStatus>(
-    `/api/rooms/${encodeURIComponent(roomId)}/playback/status`
+    `/api/rooms/${encodeURIComponent(roomId)}/playback/status`,
   );
 }
 
@@ -192,6 +191,6 @@ export type SpotifySearchResult = {
 
 export function searchSpotifySongs(query: string) {
   return requestJson<SpotifySearchResult[]>(
-    `/api/spotify/search?q=${encodeURIComponent(query)}`
+    `/api/spotify/search?q=${encodeURIComponent(query)}`,
   );
 }

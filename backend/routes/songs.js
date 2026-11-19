@@ -206,6 +206,8 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
       });
     }
 
+    // add checks for duplicates
+
     // Request Spotify app access token
     const tokenResponse = await fetch(
       "https://accounts.spotify.com/api/token",
@@ -268,6 +270,8 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
         error: "Invalid Spotify track response",
       });
     }
+
+    // add genre checkmaybe here
 
     const song = await Song.create({
       roomId: id,

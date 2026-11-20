@@ -29,9 +29,7 @@ if (isProduction) {
 }
 
 // 2. CORS configuration
-const allowedOrigins = (
-  process.env.FRONTEND_ORIGINS || "http://localhost:5173,http://127.0.0.1:5173"
-)
+const allowedOrigins = (process.env.FRONTEND_ORIGINS || "http://127.0.0.1:3000")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
@@ -61,6 +59,8 @@ if (!process.env.MONGODB_URI) {
   throw new Error("MONGODB_URI is missing");
 }
 
+const cookieSecure = process.env.COOKIE_SECURE === "true";
+
 // 5. Session configuration
 app.use(
   session({
@@ -75,8 +75,8 @@ app.use(
 
     cookie: {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      secure: cookieSecure,
+      sameSite: cookieSecure ? "none" : "lax",
       maxAge: 24 * 60 * 60 * 1000,
     },
   }),

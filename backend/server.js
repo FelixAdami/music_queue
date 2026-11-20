@@ -84,10 +84,9 @@ app.use(
 
 // 6. Spotify login redirect
 // Ensures the login and callback use the same host
+// Spotify login redirect
 app.get("/api/spotify/login", (req, res) => {
-  const backendOrigin = `http://127.0.0.1:${PORT}`;
-
-  return res.redirect(`${backendOrigin}/auth/login`);
+  return res.redirect("/auth/login");
 });
 
 // 7. API routes

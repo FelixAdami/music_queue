@@ -70,7 +70,7 @@ router.get("/callback", async (req, res) => {
   // Handle denied or failed Spotify authorization
   if (error) {
     console.warn("Spotify authorization denied or failed:", error);
-    return res.redirect(getFrontendUrl("/host?spotify=denied"));
+    return res.redirect("/host?spotify=denied");
   }
 
   if (typeof code !== "string") {
@@ -187,7 +187,7 @@ router.get("/callback", async (req, res) => {
       refreshTokenReceived: Boolean(tokens.refresh_token),
     });
 
-    return res.redirect(getFrontendUrl("/host?spotify=connected"));
+    return res.redirect("/host?spotify=connected");
   } catch (error) {
     console.error("Spotify authorization error:", error.message);
 
@@ -231,7 +231,7 @@ router.get("/me", async (req, res) => {
       displayName: user.display_name,
       image: user.images?.[0]?.url || null,
     });
-      } catch (error) {
+  } catch (error) {
     return sendApiError(res, error, "Failed to retrieve Spotify user");
   }
 });
@@ -266,7 +266,7 @@ router.get("/devices", async (req, res) => {
     return res.json({
       devices: data.devices,
     });
-    } catch (error) {
+  } catch (error) {
     return sendApiError(res, error, "Could not retrieve Spotify devices");
   }
 });
@@ -312,7 +312,7 @@ router.put("/play", async (req, res) => {
     return res.json({
       message: "Playback started",
     });
-    } catch (error) {
+  } catch (error) {
     return sendApiError(res, error, "Failed to start playback");
   }
 });
@@ -347,7 +347,7 @@ router.put("/pause", async (req, res) => {
     return res.json({
       message: "Playback paused",
     });
-    } catch (error) {
+  } catch (error) {
     return sendApiError(res, error, "Failed to pause playback");
   }
 });
@@ -432,7 +432,7 @@ router.get("/playback/status", async (req, res) => {
           }
         : null,
     });
-    } catch (error) {
+  } catch (error) {
     return sendApiError(res, error, "Failed to get playback status");
   }
 });

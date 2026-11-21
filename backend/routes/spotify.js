@@ -7,6 +7,7 @@ const { sendApiError } = require("../utils/apiError");
 
 const router = express.Router();
 
+// could be deleted - never referenced
 function getFrontendUrl(path) {
   const frontendOrigin = (
     process.env.FRONTEND_URL ||

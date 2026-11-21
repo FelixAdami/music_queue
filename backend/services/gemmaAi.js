@@ -1,7 +1,7 @@
 ﻿const baseUrl = (
-  process.env.LM_STUDIO_BASE_URL || "http://localhost:1234"
+  process.env.LM_STUDIO_URL || "http://host.docker.internal:1234"
 ).replace(/\/+$/, "");
-const model = process.env.GEMMA_MODEL || "google/gemma-4-e2b";
+const model = process.env.LM_STUDIO_MODEL || "google/gemma-4-e2b";
 
 const GENRE_CLASSIFICATION_PROMPT = [
   "You classify music using song lyrics.",

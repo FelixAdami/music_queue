@@ -3,6 +3,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Set VITE_PUBLIC_URL in a root .env file to your computer's LAN URL,
+        # for example http://192.168.1.42:3000, so phones can open QR codes.
+        VITE_PUBLIC_URL: ${VITE_PUBLIC_URL:-}
     ports:
       - "3000:3000"
     env_file:

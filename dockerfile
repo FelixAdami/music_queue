@@ -7,6 +7,9 @@ COPY my-app/package*.json ./
 RUN npm ci
 
 COPY my-app/ ./
+# Vite embeds this URL at build time so QR codes open on guest devices.
+ARG VITE_PUBLIC_URL
+ENV VITE_PUBLIC_URL=$VITE_PUBLIC_URL
 RUN npm run build
 
 

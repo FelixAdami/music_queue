@@ -139,6 +139,16 @@ export function removeSong(roomId: string, songId: string) {
   );
 }
 
+export function reorderQueue(roomId: string, songIds: string[]) {
+  return requestJson<{ message: string }>(
+    `/api/rooms/${encodeURIComponent(roomId)}/songs/reorder`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ songIds }),
+    },
+  );
+}
+
 export function getCurrentSong(roomId: string) {
   return requestJson<{ currentSong: Song | null }>(
     `/api/rooms/${encodeURIComponent(roomId)}/songs/current`,

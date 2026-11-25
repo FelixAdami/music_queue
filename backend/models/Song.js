@@ -40,6 +40,11 @@ const songSchema = new mongoose.Schema({
     default: Date.now,
   },
 
+  queuePosition: {
+    type: Number,
+    default: Date.now,
+  },
+
   playedAt: {
     type: Date,
     default: null,

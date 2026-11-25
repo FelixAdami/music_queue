@@ -145,7 +145,7 @@ router.get("/:id/songs", async (req, res) => {
       roomId: id,
       playedAt: null,
       ...genreFilter,
-    }).sort({ addedAt: 1, _id: 1 });
+    }).sort({ queuePosition: 1, addedAt: 1, _id: 1 });
 
     return res.status(200).json(songs);
   } catch (error) {
@@ -206,6 +206,100 @@ router.delete("/:id/songs/:songId", async (req, res) => {
 
     return res.status(500).json({
       error: "Failed to delete song",
+    });
+  }
+});
+
+// Reorder queued songs (host only)
+router.patch("/:id/songs/reorder", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { songIds } = req.body;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        error: "Invalid room ID",
+      });
+    }
+
+    if (
+      !Array.isArray(songIds) ||
+      songIds.length === 0 ||
+      !songIds.every(
+        (songId) =>
+          typeof songId === "string" &&
+          mongoose.isValidObjectId(songId),
+      ) ||
+      new Set(songIds).size !== songIds.length
+    ) {
+      return res.status(400).json({
+        error: "Invalid song order",
+      });
+    }
+
+    const room = await Room.findById(id);
+
+    if (!room) {
+      return res.status(404).json({
+        error: "Room not found",
+      });
+    }
+
+    if (!isRoomHost(req, room)) {
+      return res.status(403).json({
+        error: "Only the host can reorder songs",
+      });
+    }
+
+    const genreFilter =
+      room.allowedGenres.length > 0
+        ? { allowedGenres: { $in: room.allowedGenres } }
+        : {};
+
+    const songs = await Song.find({
+      roomId: id,
+      playedAt: null,
+      ...genreFilter,
+    });
+
+    const existingIds = new Set(
+      songs.map((song) => song._id.toString()),
+    );
+
+    if (
+      songIds.length !== songs.length ||
+      !songIds.every((songId) => existingIds.has(songId))
+    ) {
+      return res.status(409).json({
+        error: "Queue has changed. Please try again.",
+      });
+    }
+
+    const operations = songIds.map((songId, index) => ({
+      updateOne: {
+        filter: {
+          _id: songId,
+          roomId: id,
+          playedAt: null,
+        },
+        update: {
+          $set: {
+            queuePosition: index,
+          },
+        },
+      },
+    }));
+
+    await Song.bulkWrite(operations);
+
+    return res.status(200).json({
+      message: "Queue reordered successfully",
+    });
+  } catch (error) {
+    console.error("Error reordering queue:", error);
+
+    return res.status(500).json({
+      error: "Failed to reorder queue",
     });
   }
 });

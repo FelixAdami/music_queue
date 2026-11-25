@@ -28,7 +28,7 @@ async function playNextSong(room) {
       roomId: room._id,
       playedAt: null,
       ...genreFilter,
-    }).sort({ addedAt: 1, _id: 1 });
+    }).sort({ queuePosition: 1, addedAt: 1, _id: 1 });
 
     if (!nextSong) {
       return null;
@@ -47,9 +47,10 @@ async function playNextSong(room) {
     }
 
     // Activate the device only if it is not already active
-    if (!device.is_active) {
-      await transferSpotifyPlayback(room.hostSpotifyId, device.id);
-    }
+  if (!device.is_active) {
+  await transferSpotifyPlayback(room.hostSpotifyId, device.id);
+}
+
 
     // Start the next song on the selected device
     const spotifyResponse = await fetch(

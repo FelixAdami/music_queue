@@ -19,7 +19,7 @@ async function playNextSong(room) {
   switchingRooms.add(roomId);
 
   try {
-    // Aply room genre restriction
+    // Apply room genre restriction
     const allowedGenres = room.allowedGenres ?? [];
     const genreFilter =
       allowedGenres.length > 0 ? { allowedGenres: { $in: allowedGenres } } : {};

@@ -92,16 +92,20 @@ router.post("/:id/songs", async (req, res) => {
       spotifyUrl,
     });
 
-    // Updating song with genre
-    const genreAnalysis = await getSongGenre(song);
-    if (!genreAnalysis || !Array.isArray(genreAnalysis.genres)) {
-      return res.status(404).json({
-        error: "Could not determine song genres and themes",
-      });
+    // Make genre an optional requriment
+    const allowedGenres = room.allowedGenres;
+    if (!allowedGenres?.length) {
+      // Updating song with genre
+      const genreAnalysis = await getSongGenre(song);
+      if (!genreAnalysis || !Array.isArray(genreAnalysis.genres)) {
+        return res.status(404).json({
+          error: "Could not determine song genres and themes",
+        });
+      }
+      // Adding genre to Song object
+      song.allowedGenres = genreAnalysis.genres;
+      await song.save();
     }
-    // Adding genre to Song object
-    song.allowedGenres = genreAnalysis.genres;
-    await song.save();
 
     return res.status(201).json(song);
   } catch (error) {
@@ -324,17 +328,20 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
       spotifyUrl: track.external_urls?.spotify || null,
     });
 
-    // Updating song with genre
-    const genreAnalysis = await getSongGenre(song);
-    if (!genreAnalysis || !Array.isArray(genreAnalysis.genres)) {
-      return res.status(404).json({
-        error: "Could not determine song genres and themes",
-      });
+    // Make genre an optional requriment
+    const allowedGenres = room.allowedGenres;
+    if (!allowedGenres?.length) {
+      // Updating song with genre
+      const genreAnalysis = await getSongGenre(song);
+      if (!genreAnalysis || !Array.isArray(genreAnalysis.genres)) {
+        return res.status(404).json({
+          error: "Could not determine song genres and themes",
+        });
+      }
+      // Adding genre to Song object
+      song.allowedGenres = genreAnalysis.genres;
+      await song.save();
     }
-    // Adding genre to Song object
-    song.allowedGenres = genreAnalysis.genres;
-    await song.save();
-
     return res.status(201).json(song);
   } catch (error) {
     console.error("Add Spotify song error:", error);

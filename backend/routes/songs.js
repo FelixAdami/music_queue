@@ -186,9 +186,10 @@ router.delete("/:id/songs/:songId", async (req, res) => {
     }
 
     const deletedSong = await Song.findOneAndDelete({
-      _id: songId,
-      roomId: id,
-    });
+  _id: songId,
+  roomId: id,
+  playedAt: null,
+});
 
     if (!deletedSong) {
       return res.status(404).json({

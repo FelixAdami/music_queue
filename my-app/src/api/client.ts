@@ -132,6 +132,13 @@ export function getQueue(roomId: string) {
   return requestJson<Song[]>(`/api/rooms/${encodeURIComponent(roomId)}/songs`);
 }
 
+export function removeSong(roomId: string, songId: string) {
+  return requestJson<{ message: string; song: Song }>(
+    `/api/rooms/${encodeURIComponent(roomId)}/songs/${encodeURIComponent(songId)}`,
+    { method: "DELETE" },
+  );
+}
+
 export function getCurrentSong(roomId: string) {
   return requestJson<{ currentSong: Song | null }>(
     `/api/rooms/${encodeURIComponent(roomId)}/songs/current`,

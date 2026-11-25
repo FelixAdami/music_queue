@@ -94,7 +94,7 @@ router.post("/:id/songs", async (req, res) => {
 
     // Make genre an optional requriment
     const allowedGenres = room.allowedGenres;
-    if (!allowedGenres?.length) {
+    if (rray.isArray(allowedGenres) && allowedGenres.length > 0) {
       // Updating song with genre
       const genreAnalysis = await getSongGenre(song);
       if (!genreAnalysis || !Array.isArray(genreAnalysis.genres)) {
@@ -330,7 +330,7 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
 
     // Make genre an optional requriment
     const allowedGenres = room.allowedGenres;
-    if (!allowedGenres?.length) {
+    if (rray.isArray(allowedGenres) && allowedGenres.length > 0) {
       // Updating song with genre
       const genreAnalysis = await getSongGenre(song);
       if (!genreAnalysis || !Array.isArray(genreAnalysis.genres)) {

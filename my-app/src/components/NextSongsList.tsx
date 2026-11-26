@@ -1,10 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  getQueue,
-  removeSong,
-  reorderQueue,
-  type Song,
-} from "../api/client";
+import { getQueue, removeSong, reorderQueue, type Song } from "../api/client";
 
 import {
   DndContext,
@@ -48,6 +43,7 @@ function SortableSong({
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -65,14 +61,11 @@ function SortableSong({
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="d-flex align-items-center gap-3 p-2 border-bottom"
-    >
+    <div ref={setNodeRef} style={style} className="queue-song-row">
       <button
+        ref={setActivatorNodeRef}
         type="button"
-        className="btn btn-sm"
+        className="btn btn-sm queue-song-drag-handle"
         style={{
           cursor: isDragging ? "grabbing" : "grab",
           touchAction: "none",
@@ -87,6 +80,7 @@ function SortableSong({
 
       {song.imageUrl && (
         <img
+          className="queue-song-cover"
           src={song.imageUrl}
           alt=""
           width={55}
@@ -95,22 +89,18 @@ function SortableSong({
         />
       )}
 
-      <div>
+      <div className="queue-song-info">
         <strong>{song.title}</strong>
-        <div className="text-secondary">
-          {song.artist}
-        </div>
+        <div className="text-secondary">{song.artist}</div>
       </div>
 
       <button
         type="button"
-        className="btn btn-outline-danger btn-sm ms-auto"
+        className="btn btn-outline-danger btn-sm queue-song-remove"
         disabled={disabled || isDragging}
         onClick={() => onRemove(song._id)}
       >
-        {removingId === song._id
-          ? "Removing..."
-          : "Remove"}
+        {removingId === song._id ? "Removing..." : "X"}
       </button>
     </div>
   );
@@ -122,8 +112,7 @@ function NextSongsList({ roomId }: Props) {
   const [removeError, setRemoveError] = useState("");
   const [reorderError, setReorderError] = useState("");
 
-  const [removingId, setRemovingId] =
-    useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const [reordering, setReordering] = useState(false);
 
@@ -202,15 +191,11 @@ function NextSongsList({ roomId }: Props) {
       await removeSong(roomId, songId);
 
       setSongs((previousSongs) =>
-        previousSongs.filter(
-          (song) => song._id !== songId,
-        ),
+        previousSongs.filter((song) => song._id !== songId),
       );
     } catch (error) {
       setRemoveError(
-        error instanceof Error
-          ? error.message
-          : "Could not remove song.",
+        error instanceof Error ? error.message : "Could not remove song.",
       );
     } finally {
       setRemovingId(null);
@@ -223,32 +208,20 @@ function NextSongsList({ roomId }: Props) {
 
     const { active, over } = event;
 
-    if (
-      !over ||
-      active.id === over.id ||
-      updatingRef.current
-    ) {
+    if (!over || active.id === over.id || updatingRef.current) {
       return;
     }
 
-    const oldIndex = songs.findIndex(
-      (song) => song._id === active.id,
-    );
+    const oldIndex = songs.findIndex((song) => song._id === active.id);
 
-    const newIndex = songs.findIndex(
-      (song) => song._id === over.id,
-    );
+    const newIndex = songs.findIndex((song) => song._id === over.id);
 
     if (oldIndex === -1 || newIndex === -1) {
       return;
     }
 
     const previousSongs = songs;
-    const reorderedSongs = arrayMove(
-      songs,
-      oldIndex,
-      newIndex,
-    );
+    const reorderedSongs = arrayMove(songs, oldIndex, newIndex);
 
     updatingRef.current = true;
     queueVersionRef.current++;
@@ -264,9 +237,7 @@ function NextSongsList({ roomId }: Props) {
       );
     } catch (error) {
       setReorderError(
-        error instanceof Error
-          ? error.message
-          : "Could not reorder queue.",
+        error instanceof Error ? error.message : "Could not reorder queue.",
       );
 
       try {
@@ -290,9 +261,7 @@ function NextSongsList({ roomId }: Props) {
 
       {reordering && <p>Saving queue order...</p>}
 
-      {!error && songs.length === 0 && (
-        <p>No songs in the queue yet.</p>
-      )}
+      {!error && songs.length === 0 && <p>No songs in the queue yet.</p>}
 
       <DndContext
         sensors={sensors}
@@ -316,9 +285,7 @@ function NextSongsList({ roomId }: Props) {
               song={song}
               removingId={removingId}
               disabled={reordering || removingId !== null}
-              onRemove={(songId) =>
-                void handleRemoveSong(songId)
-              }
+              onRemove={(songId) => void handleRemoveSong(songId)}
             />
           ))}
         </SortableContext>

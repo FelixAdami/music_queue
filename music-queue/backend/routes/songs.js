@@ -5,7 +5,7 @@ const Song = require("../models/Song");
 const { getValidAccessToken } = require("../utils/spotifyAuth");
 const { playNextSong } = require("../services/queuePlayback");
 const { sendApiError } = require("../utils/apiError");
-const { getSongGenre } = require("../services/songGenre");
+const { getSongGenre } = require("../services/genreClient");
 
 const router = express.Router();
 
@@ -82,6 +82,18 @@ router.post("/:id/songs", async (req, res) => {
       });
     }
 
+    let genreAnalysis = null;
+    const allowedGenres = room.allowedGenres;
+    if (Array.isArray(allowedGenres) && allowedGenres.length > 0) {
+      genreAnalysis = await getSongGenre({ title, artist, durationMs });
+      if (!genreAnalysis) {
+        return res.status(404).json({
+          error: "Could not determine song genres and themes",
+          code: "LYRICS_NOT_FOUND",
+        });
+      }
+    }
+
     const song = await Song.create({
       roomId: id,
       spotifyId: spotifyId.trim(),
@@ -90,29 +102,18 @@ router.post("/:id/songs", async (req, res) => {
       durationMs,
       imageUrl,
       spotifyUrl,
+      ...(genreAnalysis ? { allowedGenres: genreAnalysis.genres } : {}),
     });
-
-    // Make genre an optional requriment
-    const allowedGenres = room.allowedGenres;
-    if (Array.isArray(allowedGenres) && allowedGenres.length > 0) {
-      // Updating song with genre
-      const genreAnalysis = await getSongGenre(song);
-      if (!genreAnalysis || !Array.isArray(genreAnalysis.genres)) {
-        return res.status(404).json({
-          error: "Could not determine song genres and themes",
-        });
-      }
-      // Adding genre to Song object
-      song.allowedGenres = genreAnalysis.genres;
-      await song.save();
-    }
 
     return res.status(201).json(song);
   } catch (error) {
     console.error("Error adding song:", error);
 
-    return res.status(500).json({
-      error: "Failed to add song",
+    return res.status(error.statusCode || 500).json({
+      error: error.statusCode
+        ? "Genre analysis service unavailable"
+        : "Failed to add song",
+      ...(error.code ? { code: error.code } : {}),
     });
   }
 });
@@ -413,36 +414,42 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
       });
     }
 
+    let genreAnalysis = null;
+    const allowedGenres = room.allowedGenres;
+    const artist = track.artists.map((a) => a.name).join(", ");
+    if (Array.isArray(allowedGenres) && allowedGenres.length > 0) {
+      genreAnalysis = await getSongGenre({
+        title: track.name,
+        artist,
+        durationMs: track.duration_ms,
+      });
+      if (!genreAnalysis) {
+        return res.status(404).json({
+          error: "Could not determine song genres and themes",
+          code: "LYRICS_NOT_FOUND",
+        });
+      }
+    }
+
     const song = await Song.create({
       roomId: id,
       spotifyId: track.id,
       title: track.name,
-      artist: track.artists.map((a) => a.name).join(", "),
+      artist,
       durationMs: track.duration_ms,
       imageUrl: track.album?.images?.[0]?.url || null,
       spotifyUrl: track.external_urls?.spotify || null,
+      ...(genreAnalysis ? { allowedGenres: genreAnalysis.genres } : {}),
     });
-
-    // Make genre an optional requriment
-    const allowedGenres = room.allowedGenres;
-    if (Array.isArray(allowedGenres) && allowedGenres.length > 0) {
-      // Updating song with genre
-      const genreAnalysis = await getSongGenre(song);
-      if (!genreAnalysis || !Array.isArray(genreAnalysis.genres)) {
-        return res.status(404).json({
-          error: "Could not determine song genres and themes",
-        });
-      }
-      // Adding genre to Song object
-      song.allowedGenres = genreAnalysis.genres;
-      await song.save();
-    }
     return res.status(201).json(song);
   } catch (error) {
     console.error("Add Spotify song error:", error);
 
-    return res.status(500).json({
-      error: "Failed to add Spotify song",
+    return res.status(error.statusCode || 500).json({
+      error: error.statusCode
+        ? "Genre analysis service unavailable"
+        : "Failed to add Spotify song",
+      ...(error.code ? { code: error.code } : {}),
     });
   }
 });
@@ -561,6 +568,7 @@ router.get("/:id/songs/:songId/genre", async (req, res) => {
     console.error("Song genre analysis failed:", error);
     return res.status(502).json({
       error: "Could not analyze the song lyrics",
+      ...(error.code ? { code: error.code } : {}),
     });
   }
 });

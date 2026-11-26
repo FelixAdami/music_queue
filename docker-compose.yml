@@ -14,4 +14,28 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+      GENRE_SERVICE_URL: http://genre-service:3001
+    depends_on:
+      genre-service:
+        condition: service_healthy
     restart: unless-stopped
+
+  genre-service:
+    build:
+      context: ./llm-service
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      LM_STUDIO_URL: ${LM_STUDIO_URL:-http://host.docker.internal:1234}
+      LM_STUDIO_MODEL: ${LM_STUDIO_MODEL:-google/gemma-4-e2b}
+      LM_STUDIO_API_TOKEN: ${LM_STUDIO_API_TOKEN:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

@@ -1,8 +1,8 @@
 services:
   music-queue:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./music-queue
+      dockerfile: dockerfile
       args:
         # Set VITE_PUBLIC_URL in a root .env file to your computer's LAN URL,
         # for example http://192.168.1.42:3000, so phones can open QR codes.
@@ -10,7 +10,7 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - ./backend/.env
+      - ./music-queue/backend/.env
     environment:
       NODE_ENV: production
       PORT: 3000

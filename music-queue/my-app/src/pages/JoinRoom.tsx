@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
@@ -14,6 +13,7 @@ function JoinRoom() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sessionEnded, setSessionEnded] = useState(false);
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SpotifySearchResult[]>([]);
@@ -43,10 +43,58 @@ function JoinRoom() {
     void handleJoinRoom();
   }, [roomId]);
 
+  // Check whether the session is still active
+  useEffect(() => {
+    if (!roomId || loading || error || sessionEnded) {
+      return;
+    }
+
+    let cancelled = false;
+    let checking = false;
+
+    async function checkRoomStatus() {
+      if (checking || cancelled) return;
+
+      checking = true;
+
+      try {
+        const response = await fetch(
+          `/api/rooms/${encodeURIComponent(roomId!)}/status`,
+          {
+            credentials: "include",
+            cache: "no-store",
+            signal: AbortSignal.timeout(5000),
+          }
+        );
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+
+        if (!cancelled && data.active === false) {
+          setSessionEnded(true);
+        }
+      } catch {
+        // Temporary connection errors do not end the session.
+      } finally {
+        checking = false;
+      }
+    }
+
+    void checkRoomStatus();
+
+    const interval = setInterval(checkRoomStatus, 3000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [roomId, loading, error, sessionEnded]);
+
   async function handleSearch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!query.trim()) return;
+    if (!query.trim() || sessionEnded) return;
 
     setSearching(true);
     setMessage("");
@@ -64,27 +112,53 @@ function JoinRoom() {
   }
 
   async function handleAddSong(spotifyId: string) {
-  if (!roomId || addingId) return;
+    if (!roomId || addingId || sessionEnded) return;
 
-  setAddingId(spotifyId);
-  setMessage("");
+    setAddingId(spotifyId);
+    setMessage("");
 
-  try {
-    const song = await addSpotifySong(roomId, spotifyId);
+    try {
+      const song = await addSpotifySong(roomId, spotifyId);
 
-    if (song.prioritized) {
-      setMessage("Your request counted! Song prioritized.");
-    } else {
-      setMessage("Song added to queue!");
+      if (song.prioritized) {
+        setMessage("Your request counted! Song prioritized.");
+      } else {
+        setMessage("Song added to queue!");
+      }
+    } catch (err) {
+      setMessage(
+        err instanceof Error ? err.message : "Could not add song"
+      );
+    } finally {
+      setAddingId(null);
     }
-  } catch (err) {
-    setMessage(
-      err instanceof Error ? err.message : "Could not add song"
-    );
-  } finally {
-    setAddingId(null);
   }
-}
+
+  if (sessionEnded) {
+    return (
+      <main className="app-page join-room-page">
+        <div className="join-room-shell">
+          <section
+            className="app-surface app-surface--bordered join-room-state-card"
+            role="status"
+          >
+            <p className="app-eyebrow join-room-eyebrow">
+              Session ended
+            </p>
+
+            <h1 className="app-display-title">
+              The host has ended this session.
+            </h1>
+
+            <p>
+              Thank you for joining the music queue!
+              You can now close this page.
+            </p>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   if (loading) {
     return (
@@ -94,7 +168,9 @@ function JoinRoom() {
             className="app-surface app-surface--bordered join-room-state-card"
             role="status"
           >
-            <p className="app-eyebrow join-room-eyebrow">Guest access</p>
+            <p className="app-eyebrow join-room-eyebrow">
+              Guest access
+            </p>
             <h1 className="app-display-title">Joining the room</h1>
             <p>Connecting you to the music queue...</p>
           </section>
@@ -111,7 +187,9 @@ function JoinRoom() {
             className="app-surface app-surface--bordered join-room-state-card"
             aria-labelledby="join-room-error-title"
           >
-            <p className="app-eyebrow join-room-eyebrow">Guest access</p>
+            <p className="app-eyebrow join-room-eyebrow">
+              Guest access
+            </p>
             <h1 id="join-room-error-title" className="app-display-title">
               Could not join this room
             </h1>
@@ -129,12 +207,15 @@ function JoinRoom() {
       <div className="join-room-shell">
         <header className="app-surface app-surface--bordered join-room-header">
           <div>
-            <p className="app-eyebrow join-room-eyebrow">Guest access</p>
+            <p className="app-eyebrow join-room-eyebrow">
+              Guest access
+            </p>
             <h1 id="join-room-title" className="app-display-title">
               Join the queue
             </h1>
             <p>Search Spotify and add a song for everyone to hear.</p>
           </div>
+
           <div className="join-room-code">
             <span>Room code</span>
             <code>{roomId}</code>
@@ -146,7 +227,9 @@ function JoinRoom() {
           aria-labelledby="join-room-search-title"
         >
           <div className="join-room-card-heading">
-            <p className="app-eyebrow join-room-eyebrow">Find your next track</p>
+            <p className="app-eyebrow join-room-eyebrow">
+              Find your next track
+            </p>
             <h2 id="join-room-search-title">Search songs</h2>
           </div>
 
@@ -178,7 +261,10 @@ function JoinRoom() {
           {results.length > 0 && (
             <div className="join-room-results" aria-label="Search results">
               {results.map((song) => (
-                <article key={song.spotifyId} className="join-room-result">
+                <article
+                  key={song.spotifyId}
+                  className="join-room-result"
+                >
                   {song.imageUrl && (
                     <img
                       src={song.imageUrl}
@@ -199,7 +285,9 @@ function JoinRoom() {
                     disabled={addingId !== null}
                     onClick={() => void handleAddSong(song.spotifyId)}
                   >
-                    {addingId === song.spotifyId ? "Adding..." : "Add to Queue"}
+                    {addingId === song.spotifyId
+                      ? "Adding..."
+                      : "Add to Queue"}
                   </button>
                 </article>
               ))}

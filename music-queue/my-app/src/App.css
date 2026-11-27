@@ -1,6 +1,6 @@
 @font-face {
   font-family: "CalteoDemo";
-  src: url("./assets/font/CalteoDemoRegular-8OvrZ.ttf") format("truetype");
+  src: url("./assets/CalteoDemoRegular-8OvrZ.ttf") format("truetype");
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -16,8 +16,14 @@
   --app-slate: #52677d;
   --app-border: rgba(226, 218, 201, 0.18);
   --app-shadow: 0 18px 50px rgba(16, 16, 16, 0.16);
-  --app-gradient: linear-gradient(112deg, var(--app-blue) 0%, var(--app-slate) 48%, var(--app-cream) 100%);
-  --app-display-font: "CalteoDemo", var(--heading, var(--sans, system-ui, sans-serif));
+  --app-gradient: linear-gradient(
+    112deg,
+    var(--app-blue) 0%,
+    var(--app-slate) 48%,
+    var(--app-cream) 100%
+  );
+  --app-display-font:
+    "CalteoDemo", var(--heading, var(--sans, system-ui, sans-serif));
 }
 
 .app-page {
@@ -68,7 +74,9 @@
   color: var(--app-ink);
   font-weight: 700;
   text-decoration: none;
-  transition: background-color 150ms ease, transform 150ms ease;
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease;
 }
 
 .app-pill-link:hover {

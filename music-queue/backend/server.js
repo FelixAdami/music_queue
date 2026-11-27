@@ -92,6 +92,10 @@ app.use((req, res, next) => {
     method === "GET" &&
     requestPath === "/api/spotify/search";
 
+  const isRoomStatusRequest =
+  method === "GET" &&
+  /^\/api\/rooms\/[a-f0-9]{24}\/status$/i.test(requestPath);
+
   const isAddSongRequest =
     method === "POST" &&
     /^\/api\/rooms\/[a-f0-9]{24}\/songs\/from-spotify$/i.test(
@@ -107,14 +111,15 @@ app.use((req, res, next) => {
     requestPath.startsWith("/assets/");
 
   if (
-    isJoinRequest ||
-    isSearchRequest ||
-    isAddSongRequest ||
-    isGuestPage ||
-    isStaticAsset
-  ) {
-    return next();
-  }
+  isJoinRequest ||
+  isSearchRequest ||
+  isAddSongRequest ||
+  isRoomStatusRequest ||
+  isGuestPage ||
+  isStaticAsset
+) {
+  return next();
+}
 
   return res.status(403).json({
     error: "This endpoint is not publicly accessible",

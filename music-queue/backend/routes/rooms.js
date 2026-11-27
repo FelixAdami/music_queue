@@ -249,4 +249,37 @@ router.delete("/:id", requireSpotifyAuth, requireRoomHost, async (req, res) => {
   }
 });
 
+// Check whether a guest session is still active
+router.get("/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    res.set("Cache-Control", "no-store");
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        error: "Invalid room ID",
+      });
+    }
+
+    if (req.session?.joinedRoomId !== id) {
+      return res.status(403).json({
+        error: "Please join the room first",
+      });
+    }
+
+    const roomExists = await Room.exists({ _id: id });
+
+    return res.status(200).json({
+      active: Boolean(roomExists),
+    });
+  } catch (error) {
+    console.error("Room status error:", error);
+
+    return res.status(500).json({
+      error: "Could not check room status",
+    });
+  }
+});
+
 module.exports = router;

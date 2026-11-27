@@ -206,3 +206,102 @@
     transition: none;
   }
 }
+
+/* Smart Queue setting */
+.smart-queue-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px;
+  margin-top: 8px;
+  border: 1px solid #625f5b;
+  border-radius: 16px;
+  background: #1c1c1c;
+  text-align: left;
+  transition: border-color 150ms ease;
+}
+
+.smart-queue-option.enabled {
+  border-color: var(--app-cream);
+}
+
+.smart-queue-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.smart-queue-title {
+  display: block;
+  color: #f4f0eb;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.smart-queue-info p {
+  margin: 6px 0 0;
+  color: #e6e1dc;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  opacity: 0.7;
+}
+
+.smart-queue-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 52px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #555;
+  cursor: pointer;
+  transition: background-color 180ms ease;
+}
+
+.smart-queue-switch-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f4f0eb;
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease;
+}
+
+.smart-queue-switch.active {
+  background: var(--app-cream);
+}
+
+.smart-queue-switch.active .smart-queue-switch-thumb {
+  transform: translateX(22px);
+  background: var(--app-ink);
+}
+
+.smart-queue-switch:focus-visible {
+  outline: 3px solid var(--app-cream);
+  outline-offset: 4px;
+}
+
+/* Space between Smart Queue and create button */
+.smart-queue-option + .create-room-button {
+  margin-top: 10px;
+}
+
+@media (max-width: 680px) {
+  .smart-queue-option {
+    padding: 16px;
+    gap: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smart-queue-option,
+  .smart-queue-switch,
+  .smart-queue-switch-thumb {
+    transition: none;
+  }
+}

@@ -41,7 +41,6 @@ function CreateRoom() {
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [smartQueueEnabled, setSmartQueueEnabled] = useState(false);
 
-  // Function for toggle selection of genres
   function toggleGenre(genre: string) {
     setSelectedGenres((currentGenres) =>
       currentGenres.includes(genre)
@@ -235,29 +234,37 @@ function CreateRoom() {
                 </fieldset>
 
                 {/* Smart Queue setting */}
-                <div className="form-check mb-3">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    id="smart-queue"
-                    checked={smartQueueEnabled}
-                    onChange={(event) =>
-                      setSmartQueueEnabled(event.target.checked)
+                <div
+                  className={`smart-queue-option ${
+                    smartQueueEnabled ? "enabled" : ""
+                  }`}
+                >
+                  <div className="smart-queue-info">
+                    <span id="smart-queue-label" className="smart-queue-title">
+                      Smart Queue
+                    </span>
+
+                    <p id="smart-queue-description">
+                      Songs requested by multiple guests move
+                      forward in the queue.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={smartQueueEnabled}
+                    aria-labelledby="smart-queue-label"
+                    aria-describedby="smart-queue-description"
+                    className={`smart-queue-switch ${
+                      smartQueueEnabled ? "active" : ""
+                    }`}
+                    onClick={() =>
+                      setSmartQueueEnabled((current) => !current)
                     }
-                  />
-
-                  <label
-                    className="form-check-label"
-                    htmlFor="smart-queue"
                   >
-                    Enable Smart Queue
-                  </label>
-
-                  <p className="genre-description mt-2">
-                    Each additional request from a different guest
-                    moves an existing song up to two positions
-                    forward in the queue.
-                  </p>
+                    <span className="smart-queue-switch-thumb" />
+                  </button>
                 </div>
 
                 <button

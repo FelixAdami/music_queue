@@ -9,6 +9,7 @@ export type Room = {
   hostSpotifyId: string;
   createdAt: string;
   allowedGenres: string[];
+  smartQueueEnabled: boolean;
 };
 
 export type SpotifyUser = {
@@ -79,10 +80,18 @@ export function getCurrentSpotifyUser() {
   return requestJson<SpotifyUser>("/api/spotify/me");
 }
 
-export function createRoom(name: string, allowedGenres: string[]) {
+export function createRoom(
+  name: string,
+  allowedGenres: string[],
+  smartQueueEnabled = false,
+) {
   return requestJson<Room>("/api/rooms", {
     method: "POST",
-    body: JSON.stringify({ name, allowedGenres }),
+    body: JSON.stringify({
+      name,
+      allowedGenres,
+      smartQueueEnabled,
+    }),
   });
 }
 
@@ -162,7 +171,10 @@ export function getSongGenre(roomId: string, songId: string) {
 }
 
 export function addSpotifySong(roomId: string, spotifyId: string) {
-  return requestJson<Song>(
+  return requestJson<Song & {
+    prioritized?: boolean;
+    message?: string;
+  }>(
     `/api/rooms/${encodeURIComponent(roomId)}/songs/from-spotify`,
     {
       method: "POST",

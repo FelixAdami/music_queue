@@ -64,22 +64,27 @@ function JoinRoom() {
   }
 
   async function handleAddSong(spotifyId: string) {
-    if (!roomId || addingId) return;
+  if (!roomId || addingId) return;
 
-    setAddingId(spotifyId);
-    setMessage("");
+  setAddingId(spotifyId);
+  setMessage("");
 
-    try {
-      await addSpotifySong(roomId, spotifyId);
+  try {
+    const song = await addSpotifySong(roomId, spotifyId);
+
+    if (song.prioritized) {
+      setMessage("Your request counted! Song prioritized.");
+    } else {
       setMessage("Song added to queue!");
-    } catch (err) {
-      setMessage(
-        err instanceof Error ? err.message : "Could not add song"
-      );
-    } finally {
-      setAddingId(null);
     }
+  } catch (err) {
+    setMessage(
+      err instanceof Error ? err.message : "Could not add song"
+    );
+  } finally {
+    setAddingId(null);
   }
+}
 
   if (loading) {
     return (

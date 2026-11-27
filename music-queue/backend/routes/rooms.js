@@ -58,11 +58,21 @@ async function requireRoomHost(req, res, next) {
 // 1. Create a new room
 router.post("/", requireSpotifyAuth, async (req, res) => {
   try {
-    const { name, allowedGenres = [] } = req.body;
+    const {
+      name,
+      allowedGenres = [],
+      smartQueueEnabled = false,
+    } = req.body;
 
     if (typeof name !== "string" || !name.trim()) {
       return res.status(400).json({
         error: "Room name is required",
+      });
+    }
+
+    if (typeof smartQueueEnabled !== "boolean") {
+      return res.status(400).json({
+        error: "Invalid smart queue setting",
       });
     }
 
@@ -86,6 +96,7 @@ router.post("/", requireSpotifyAuth, async (req, res) => {
       name: name.trim(),
       hostSpotifyId: req.session.spotifyUserId,
       allowedGenres: normalizedGenres,
+      smartQueueEnabled,
     });
 
     return res.status(201).json(room);

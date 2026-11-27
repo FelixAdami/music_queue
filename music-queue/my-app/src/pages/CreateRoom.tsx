@@ -39,8 +39,9 @@ function CreateRoom() {
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [error, setError] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [smartQueueEnabled, setSmartQueueEnabled] = useState(false);
 
-  // Funtion for toggle selection of genres
+  // Function for toggle selection of genres
   function toggleGenre(genre: string) {
     setSelectedGenres((currentGenres) =>
       currentGenres.includes(genre)
@@ -68,6 +69,7 @@ function CreateRoom() {
         if (!isCurrentRequest) return;
 
         setSpotifyUser(null);
+
         if (
           !(requestError instanceof ApiError && requestError.status === 401)
         ) {
@@ -94,14 +96,21 @@ function CreateRoom() {
     setError("");
 
     const trimmedName = roomName.trim();
+
     if (!trimmedName) {
       setError("Enter a party name before creating the room.");
       return;
     }
 
     setCreatingRoom(true);
+
     try {
-      const room = await createRoom(trimmedName, selectedGenres);
+      const room = await createRoom(
+        trimmedName,
+        selectedGenres,
+        smartQueueEnabled,
+      );
+
       navigate(`/room/${encodeURIComponent(room._id)}`);
     } catch (requestError) {
       setError(
@@ -122,10 +131,14 @@ function CreateRoom() {
             className="app-surface create-room-card"
             aria-labelledby="create-room-title"
           >
-            <p className="app-eyebrow create-room-eyebrow">Spotify setup</p>
+            <p className="app-eyebrow create-room-eyebrow">
+              Spotify setup
+            </p>
+
             <h1 id="create-room-title" className="app-display-title">
               Create a music room
             </h1>
+
             <p className="create-room-status" role="status">
               Checking your Spotify connection...
             </p>
@@ -142,7 +155,10 @@ function CreateRoom() {
           className="app-surface create-room-card"
           aria-labelledby="create-room-title"
         >
-          <p className="app-eyebrow create-room-eyebrow">Spotify setup</p>
+          <p className="app-eyebrow create-room-eyebrow">
+            Spotify setup
+          </p>
+
           <h1 id="create-room-title" className="app-display-title">
             Create a music room
           </h1>
@@ -156,6 +172,7 @@ function CreateRoom() {
           {!spotifyUser ? (
             <div className="create-room-body">
               <p>Connect Spotify to create and host a room.</p>
+
               <button
                 className="create-room-button"
                 type="button"
@@ -170,8 +187,13 @@ function CreateRoom() {
                 Connected to Spotify as{" "}
                 {spotifyUser.displayName || spotifyUser.id}.
               </p>
-              <form className="create-room-form" onSubmit={handleCreateRoom}>
+
+              <form
+                className="create-room-form"
+                onSubmit={handleCreateRoom}
+              >
                 <label htmlFor="party-name">Party name</label>
+
                 <input
                   id="party-name"
                   name="partyName"
@@ -180,6 +202,7 @@ function CreateRoom() {
                   maxLength={100}
                   required
                 />
+
                 <fieldset className="genre-selection mb-4">
                   <legend className="genre-legend mb-2">
                     Choose optional music genres
@@ -210,6 +233,33 @@ function CreateRoom() {
                     ))}
                   </div>
                 </fieldset>
+
+                {/* Smart Queue setting */}
+                <div className="form-check mb-3">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="smart-queue"
+                    checked={smartQueueEnabled}
+                    onChange={(event) =>
+                      setSmartQueueEnabled(event.target.checked)
+                    }
+                  />
+
+                  <label
+                    className="form-check-label"
+                    htmlFor="smart-queue"
+                  >
+                    Enable Smart Queue
+                  </label>
+
+                  <p className="genre-description mt-2">
+                    Each additional request from a different guest
+                    moves an existing song up to two positions
+                    forward in the queue.
+                  </p>
+                </div>
+
                 <button
                   className="create-room-button"
                   type="submit"

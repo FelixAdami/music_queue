@@ -45,6 +45,12 @@ const songSchema = new mongoose.Schema({
     default: Date.now,
   },
 
+  requestedBy: {
+  type: [String],
+  default: [],
+  select: false,
+  },
+
   playedAt: {
     type: Date,
     default: null,

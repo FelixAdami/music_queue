@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const crypto = require("node:crypto");
 const Room = require("../models/Room");
 const Song = require("../models/Song");
 const { getValidAccessToken } = require("../utils/spotifyAuth");
@@ -23,6 +24,118 @@ function isRoomHost(req, room) {
     req.session?.spotifyUserId &&
     req.session.spotifyUserId === room.hostSpotifyId,
   );
+}
+
+// Generate a protected requester identifier
+function getRequesterId(req, room) {
+  const identity = isRoomHost(req, room)
+    ? `host:${req.session.spotifyUserId}`
+    : `guest:${req.sessionID}`;
+
+  return crypto
+    .createHmac("sha256", process.env.SESSION_SECRET)
+    .update(`${room._id}:${identity}`)
+    .digest("hex");
+}
+
+// Smart Queue: move an existing song two positions forward
+async function prioritizeSong(req, res, room, existingSong) {
+  if (!room.smartQueueEnabled || isRoomHost(req, room)) {
+    return res.status(409).json({
+      error: "This song is already in the queue",
+      code: "DUPLICATE_SONG",
+    });
+  }
+
+  const requesterId = getRequesterId(req, room);
+
+  const genreFilter =
+    room.allowedGenres.length > 0
+      ? { allowedGenres: { $in: room.allowedGenres } }
+      : {};
+
+  let updatedSong;
+
+  await mongoose.connection.transaction(async (session) => {
+    updatedSong = null;
+
+    const currentRoom = await Room.findById(room._id).session(session);
+
+    if (!currentRoom) return;
+
+    // Get the current queue in playback order
+    const songs = await Song.find({
+      roomId: room._id,
+      playedAt: null,
+      _id: { $ne: currentRoom.currentSongId },
+      ...genreFilter,
+    })
+      .sort({ queuePosition: 1, addedAt: 1, _id: 1 })
+      .session(session);
+
+    const index = songs.findIndex(
+      (song) => song._id.equals(existingSong._id),
+    );
+
+    if (index === -1) return;
+
+    // Only accept one request per guest and song
+    updatedSong = await Song.findOneAndUpdate(
+      {
+        _id: existingSong._id,
+        roomId: room._id,
+        playedAt: null,
+        requestedBy: { $ne: requesterId },
+      },
+      {
+        $addToSet: { requestedBy: requesterId },
+      },
+      { new: true, session },
+    );
+
+    if (!updatedSong) return;
+
+    // Move the song two positions forward
+    const newIndex = Math.max(0, index - 2);
+
+    if (newIndex !== index) {
+      const [song] = songs.splice(index, 1);
+      songs.splice(newIndex, 0, song);
+
+      const operations = songs.map((song, position) => ({
+        updateOne: {
+          filter: {
+            _id: song._id,
+            roomId: room._id,
+            playedAt: null,
+          },
+          update: {
+            $set: { queuePosition: position },
+          },
+        },
+      }));
+
+      await Song.bulkWrite(operations, { session });
+
+      updatedSong.queuePosition = newIndex;
+    }
+  });
+
+  if (!updatedSong) {
+    return res.status(409).json({
+      error: "Song already requested or no longer available",
+      code: "DUPLICATE_SONG",
+    });
+  }
+
+  const result = updatedSong.toObject();
+  delete result.requestedBy;
+
+  return res.status(200).json({
+    ...result,
+    prioritized: true,
+    message: "Song request counted!",
+  });
 }
 
 // 1. Add a song manually
@@ -76,16 +189,15 @@ router.post("/:id/songs", async (req, res) => {
     });
 
     if (existingSong) {
-      return res.status(409).json({
-        error: "This song is already in the queue",
-        code: "DUPLICATE_SONG",
-      });
+      return await prioritizeSong(req, res, room, existingSong);
     }
 
     let genreAnalysis = null;
     const allowedGenres = room.allowedGenres;
+
     if (Array.isArray(allowedGenres) && allowedGenres.length > 0) {
       genreAnalysis = await getSongGenre({ title, artist, durationMs });
+
       if (!genreAnalysis) {
         return res.status(404).json({
           error: "Could not determine song genres and themes",
@@ -96,6 +208,7 @@ router.post("/:id/songs", async (req, res) => {
 
     const song = await Song.create({
       roomId: id,
+      requestedBy: [getRequesterId(req, room)],
       spotifyId: spotifyId.trim(),
       title: title.trim(),
       artist: artist.trim(),
@@ -105,7 +218,10 @@ router.post("/:id/songs", async (req, res) => {
       ...(genreAnalysis ? { allowedGenres: genreAnalysis.genres } : {}),
     });
 
-    return res.status(201).json(song);
+    const result = song.toObject();
+    delete result.requestedBy;
+
+    return res.status(201).json(result);
   } catch (error) {
     console.error("Error adding song:", error);
 
@@ -187,10 +303,10 @@ router.delete("/:id/songs/:songId", async (req, res) => {
     }
 
     const deletedSong = await Song.findOneAndDelete({
-  _id: songId,
-  roomId: id,
-  playedAt: null,
-});
+      _id: songId,
+      roomId: id,
+      playedAt: null,
+    });
 
     if (!deletedSong) {
       return res.status(404).json({
@@ -345,10 +461,7 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
     });
 
     if (existingSong) {
-      return res.status(409).json({
-        error: "This song is already in the queue",
-        code: "DUPLICATE_SONG",
-      });
+      return await prioritizeSong(req, res, room, existingSong);
     }
 
     // Request Spotify app access token
@@ -417,12 +530,14 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
     let genreAnalysis = null;
     const allowedGenres = room.allowedGenres;
     const artist = track.artists.map((a) => a.name).join(", ");
+
     if (Array.isArray(allowedGenres) && allowedGenres.length > 0) {
       genreAnalysis = await getSongGenre({
         title: track.name,
         artist,
         durationMs: track.duration_ms,
       });
+
       if (!genreAnalysis) {
         return res.status(404).json({
           error: "Could not determine song genres and themes",
@@ -433,6 +548,7 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
 
     const song = await Song.create({
       roomId: id,
+      requestedBy: [getRequesterId(req, room)],
       spotifyId: track.id,
       title: track.name,
       artist,
@@ -441,7 +557,11 @@ router.post("/:id/songs/from-spotify", async (req, res) => {
       spotifyUrl: track.external_urls?.spotify || null,
       ...(genreAnalysis ? { allowedGenres: genreAnalysis.genres } : {}),
     });
-    return res.status(201).json(song);
+
+    const result = song.toObject();
+    delete result.requestedBy;
+
+    return res.status(201).json(result);
   } catch (error) {
     console.error("Add Spotify song error:", error);
 
@@ -542,21 +662,31 @@ router.get("/:id/songs/current", async (req, res) => {
 router.get("/:id/songs/:songId/genre", async (req, res) => {
   try {
     const { id, songId } = req.params;
+
     if (!mongoose.isValidObjectId(id) || !mongoose.isValidObjectId(songId)) {
       return res.status(400).json({ error: "Invalid room ID" });
     }
 
     const room = await Room.findById(id);
-    if (!room) return res.status(404).json({ error: "Room not found" });
-    // Genre analysis is available for any song in this room, including queued songs.
+
+    if (!room) {
+      return res.status(404).json({ error: "Room not found" });
+    }
+
+    // Genre analysis is available for any song in this room
     const song = await Song.findOne({
       _id: songId,
       roomId: room._id,
     });
-    if (!song)
-      return res.status(404).json({ error: "Song not found in this room" });
+
+    if (!song) {
+      return res.status(404).json({
+        error: "Song not found in this room",
+      });
+    }
 
     const genre = await getSongGenre(song);
+
     if (!genre) {
       return res.status(404).json({
         error: "Lyrics are not available for this song",
@@ -566,12 +696,14 @@ router.get("/:id/songs/:songId/genre", async (req, res) => {
     return res.status(200).json(genre);
   } catch (error) {
     console.error("Song genre analysis failed:", error);
+
     return res.status(502).json({
       error: "Could not analyze the song lyrics",
       ...(error.code ? { code: error.code } : {}),
     });
   }
 });
+
 router.put("/:id/playback/pause", async (req, res) => {
   try {
     const { id } = req.params;
